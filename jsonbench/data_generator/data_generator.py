@@ -46,7 +46,6 @@ def generate_itinerary(duration):
     start_date = fake.date_between(start_date=datetime.today()-timedelta(days=3650))
     _ = 0
     while _ < duration:
-        print(_)
         location = fake.city()
         date = (start_date + timedelta(days=_)).strftime("%Y-%m-%d")
 

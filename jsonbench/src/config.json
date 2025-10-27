@@ -1,6 +1,6 @@
 {
     "database": "mongodb",
-    "scale_factor": 10,
+    "scale_factor": 1,
     "workers": 1,
     "duration": 300
 }
