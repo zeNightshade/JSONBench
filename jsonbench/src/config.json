@@ -1,5 +1,5 @@
 {
-    "database": "mongodb",
+    "database": "couchbase",
     "scale_factor": 1,
     "workers": 1,
     "duration": 300
