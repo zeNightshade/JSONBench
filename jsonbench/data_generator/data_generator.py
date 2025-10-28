@@ -159,10 +159,13 @@ def generate_reviews(database, scale_factor):
 
     print("> Reviews data generated successfully!")
 
-def main(database, scale_factor):
+def main(config):
+    database = config.get_database()
+    scale_factor = config.get_scale_factor()
+
     print("> Starting data generation and loading process...")
     print("-" * 50)
-
+    
     print("> Clearing existing data and dropping existing collections...")
     database.drop_collections()
     print("> Creating collections...")

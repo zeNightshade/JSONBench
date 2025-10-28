@@ -1,6 +1,12 @@
 {
-    "database": "couchbase",
-    "scale_factor": 1,
+    "database": "mongodb",
+    "generate_data": true,
+    "scale_factor": 2,
     "workers": 1,
-    "duration": 300
+    "duration": 300,
+    "query_template_path": "jsonbench/src/queries.json",
+    "query_selection_probability": [
+        0.125, 0.125, 0.125, 0.125,
+        0.125, 0.125, 0.125, 0.125
+    ]
 }

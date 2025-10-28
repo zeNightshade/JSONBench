@@ -1,0 +1,165 @@
+[
+    {
+        "name": "Query 1",
+        "description": "Total revenue for each tour",
+        "primary_collection": "bookings",
+        "operations": {
+            "group": {
+                "by": "tour_id",
+                "aggregates": {
+                    "total_revenue": "sum(total_price)"
+                }
+            },
+            "project": {
+                "tour_id": "tour_id",
+                "total_revenue": "tota"
+            }
+        }
+    },
+    {
+        "name": "Query 2",
+        "description": "Traveller age distribution for each tour",
+        "primary_collection": "bookings",
+        "operations": {
+            "unnest": [
+                {
+                    "field": "travellers",
+                    "from": "bookings"
+                }
+            ],
+            "group": {
+                "by": "tour_id",
+                "aggregates": {
+                    "avg_age": "avg(travellers.age)",
+                    "min_age": "min(travellers.age)",
+                    "max_age": "max(travellers.age)"
+                }
+            }
+        } 
+    },
+    {
+        "name": "Query 3",
+        "description": "Average traveller group size (per booking) for each tour",
+        "primary_collection": "bookings",
+        "operations": {
+            "group": {
+                "by": "tour_id",
+                "aggregates": {
+                    "avg_grp_size": "avg(size(travellers))"
+                }
+            }
+        } 
+    },
+    {
+        "name": "Query 4",
+        "description": "Number of tours per difficulty level that visited a specific location",
+        "primary_collection": "tours",
+        "operations": {
+            "unnest": ["itinerary"],
+            "match": "itinerary.location",
+            "group": {
+                "by": "difficulty",
+                "aggregates": {
+                    "num_of_tours": "count(*)"
+                }
+            }
+        }
+    },
+    {
+        "name": "Query 5",
+        "description": "Average rating for each tour",
+        "primary_collection": "tours",
+        "operations": {
+            "join": {
+                "from": "reviews",
+                "localField": "_id",
+                "foreignField": "tour_id"
+            },
+            "group": {
+                "by": "_id",
+                "aggregates": {
+                    "avg_rating": "avg(reviews.rating)"
+                }
+            }
+        }
+    },
+    {
+        "name": "Query 6",
+        "description": "Average traveller age for each destination",
+        "primary_collection": "bookings",
+        "operations": {
+            "join": {
+                "from": "tours",
+                "localField": "tour_id",
+                "foreignField": "_id"
+            },
+            "unnest": [
+                {
+                    "field": "travellers",
+                    "from": "bookings"
+                }
+            ],
+            "group": {
+                "by": "tours.destination",
+                "aggregates": {
+                    "avg_age": "avg(travellers.age)"
+                }
+            }
+        }
+    },
+    {
+        "name": "Query 7",
+        "description": "Total number of travellers for each location visited by a tour",
+        "primary_collection": "tours",
+        "operations": {
+            "join": {
+                "from": "bookings",
+                "localField": "_id",
+                "foreignField": "tour_id"
+            },
+            "unnest": [
+                {
+                    "field": "itinerary",
+                    "from": "tours"
+                }
+            ],
+            "group": {
+                "by": "itinerary.location",
+                "aggregates": {
+                    "total_travellers": "sum(size(bookings.travellers))"
+                }
+            }
+        }
+    },
+    {
+        "name": "Query 8",
+        "description": "Average rating for each destination by nationality",
+        "primary_collection": "tours",
+        "operations": {
+            "join": [
+                {
+                    "from": "bookings",
+                    "localField": "_id",
+                    "foreignField": "tour_id"
+                },
+                {
+                    "from": "reviews",
+                    "localField": "_id",
+                    "foreignField": "tour_id"
+                }
+            ],
+            "unnest": [
+                {
+                    "field": "bookings.travellers",
+                    "from": "bookings"
+                }
+            ],
+            "group": {
+                "by": ["destination", "bookings.travellers.nationality"],
+                "aggregates": {
+                    "avg_rating": "avg(reviews.rating)"
+                }
+            }
+        }
+    }
+]

@@ -8,31 +8,23 @@ from couchbase.options import (ClusterOptions, ClusterTimeoutOptions,
 
 
 class Couchbase:
-    uri = "couchbase://localhost"
-    username = "Administrator"
-    password = "password"
-    bucket_name = "tour_bookings"
-    scope_name = "_default"
-
-    cb_scope = None
-    coll_mgr = None
-    users = None
-    tours = None
-    bookings = None
-    reviews = None
-
     def __init__(self):
+        uri = "couchbase://localhost"
+        username = "Administrator"
+        password = "password"
+        bucket_name = "tour_bookings"
+        self.scope_name = "_default"
         auth = PasswordAuthenticator(
-            self.username,
-            self.password,
+            username,
+            password,
         )
 
-        cluster = Cluster(self.uri, ClusterOptions(auth))
+        cluster = Cluster(uri, ClusterOptions(auth))
 
         # Wait until the cluster is ready for use
         cluster.wait_until_ready(timedelta(seconds=5))
 
-        cb = cluster.bucket(self.bucket_name)
+        cb = cluster.bucket(bucket_name)
         self.coll_mgr = cb.collections()
         self.cb_scope = cb.scope(self.scope_name)
 
@@ -130,3 +122,10 @@ class Couchbase:
             self.reviews.upsert(id, new_review)
         except Exception as e:
             raise Exception("Unable to add a user to the Couchbase database due to the following error: ", e)
+        
+    def query(self, primary_collection, query):
+        try:
+            results = self.cb_scope.query(query)
+            return results
+        except Exception as e:
+            raise Exception("Unable to query the Couchbase database due to the following error: ", e)

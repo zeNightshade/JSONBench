@@ -2,20 +2,13 @@ from pymongo import MongoClient
 
 
 class MongoDB:
-    uri = "mongodb://localhost:27017/"
-    database_name = "tour_bookings"
-    
-    database = None
-    users = None
-    tours = None
-    bookings = None
-    reviews = None
-
     def __init__(self):
-        self.client = MongoClient(self.uri)
+        uri = "mongodb://localhost:27017/"
+        db_name = "tour_bookings"
+        client = MongoClient(uri)
 
         try:
-            self.database = self.client.get_database(self.database_name)
+            self.database = client.get_database(db_name)
 
             self.users = self.database.get_collection("users")
             self.tours = self.database.get_collection("tours")
@@ -105,3 +98,18 @@ class MongoDB:
             self.reviews.insert_one(new_review)
         except Exception as e:
             raise Exception("Unable to add a user to the MongoDB database due to the following error: ", e)
+        
+    def query(self, primary_collection, query):
+        try:
+            if primary_collection == "users":
+                results = self.users.aggregate(query)
+            elif primary_collection == "tours":
+                results = self.tours.aggregate(query)
+            elif primary_collection == "bookings":
+                results = self.bookings.aggregate(query)
+            elif primary_collection == "reviews":
+                results = self.reviews.aggregate(query)
+
+            return results
+        except Exception as e:
+            raise Exception("Unable to query the MongoDB database due to the following error: ", e)

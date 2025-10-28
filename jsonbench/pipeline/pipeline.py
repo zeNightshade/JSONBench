@@ -1,5 +1,6 @@
-from jsonbench.config_loader import config_loader
 from jsonbench.data_generator import data_generator
+from jsonbench.query_generator import query_generator
+from jsonbench.config_loader import config_loader
 
 
 def main(args):
@@ -7,12 +8,14 @@ def main(args):
     print(f"{' ' * 40}Welcome to JSONBench!")
     print("=" * 101)
     
-    
-    if len(args) != 0 and args[0] == "-d":
+    if len(args) != 0:
+        config = config_loader.ConfigLoader(args[0])
+    else:
+        config = config_loader.ConfigLoader()
+
+    if config.get_generate_data():
         # Data generation mode
-        database, scale_factor = config_loader.load_data_generation_config()
-        data_generator.main(database, scale_factor)
+        data_generator.main(config)
     else:
         # Benchmarking mode
-        database, workers, duration = config_loader.load_benchmark_config()
-        # run_benchmark()
+        query_generator.main(config)
