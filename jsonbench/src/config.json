@@ -1,7 +1,7 @@
 {
-    "database": "mongodb",
-    "generate_data": true,
-    "scale_factor": 2,
+    "database": "couchbase",
+    "generate_data": false,
+    "scale_factor": 0.1,
     "workers": 1,
     "duration": 300,
     "query_template_path": "jsonbench/src/queries.json",

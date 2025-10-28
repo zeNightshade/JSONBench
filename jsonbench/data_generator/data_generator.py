@@ -24,6 +24,7 @@ def generate_users(database, scale_factor):
         name = fake.name()
         email = fake.email()
         password = bcrypt.hashpw(fake.password(16).encode(), bcrypt.gensalt()).decode()
+        # password = fake.password(16)
         gender = fake.passport_gender()
         nationality = fake.country()
 

@@ -33,16 +33,31 @@ def benchmark(config, queries):
     database = config.get_database()
     db_type = config.get_database_type()
     query_sel_prob = config.get_query_sel_prob()
+    results = []
 
-    start_time = time.perf_counter()
+    overall_start_time = time.perf_counter()
 
     for _ in alive_it(range(config.get_duration())):
-        query = np.random.choice(queries, p=query_sel_prob)
-        results = database.query(query["primary_collection"], query["query"])
+        # Warm-up code here
 
-    end_time = time.perf_counter()
-    elapsed_time = end_time - start_time
-    print(f"========== Execution time: {elapsed_time:.6f} seconds ==========")
+        query = np.random.choice(queries, p=query_sel_prob)
+        start_time = time.perf_counter()
+        database.query(query["primary_collection"], query["query"])
+        end_time = time.perf_counter()
+        elapsed_time = end_time - start_time
+        results.append({
+            "name": query["name"],
+            "time": elapsed_time
+        })
+
+        # Cool-down code here
+
+    overall_end_time = time.perf_counter()
+    overall_elapsed_time = overall_end_time - overall_start_time
+    print(f"========== Execution time: {overall_elapsed_time:.6f} seconds ==========")
+
+    with open(f"jsonbench/results/{db_type}/benchmark.json", 'w+') as f:
+        json.dump(results, f, indent=4)
 
     # for query in alive_it(queries):
     #     results = database.query(query["primary_collection"], query["query"])

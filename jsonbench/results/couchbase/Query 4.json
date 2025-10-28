@@ -1,0 +1,14 @@
+[
+    {
+        "difficulty": "intermediate",
+        "num_of_tours": 19
+    },
+    {
+        "difficulty": "difficult",
+        "num_of_tours": 21
+    },
+    {
+        "difficulty": "easy",
+        "num_of_tours": 27
+    }
+]
