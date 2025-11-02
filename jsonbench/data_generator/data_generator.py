@@ -6,6 +6,7 @@ import numpy as np
 
 import bcrypt
 import random
+import time
 
 
 fake = Faker()
@@ -23,8 +24,8 @@ def generate_users(database, scale_factor):
         id = fake.unique.md5()
         name = fake.name()
         email = fake.email()
-        password = bcrypt.hashpw(fake.password(16).encode(), bcrypt.gensalt()).decode()
-        # password = fake.password(16)
+        # password = bcrypt.hashpw(fake.password(16).encode(), bcrypt.gensalt()).decode()
+        password = fake.password(16)
         gender = fake.passport_gender()
         nationality = fake.country()
 
@@ -62,7 +63,7 @@ def generate_itinerary(duration):
 def generate_tours(database, scale_factor):
     print("> Generating tours data...")
 
-    num_docs = int(100 * scale_factor)
+    num_docs = int(200 * scale_factor)
     for _ in alive_it(range(num_docs)):
         id = fake.unique.md5()
         name = fake.name()
@@ -164,17 +165,28 @@ def main(config):
     database = config.get_database()
     scale_factor = config.get_scale_factor()
 
+    config.display_config()
     print("> Starting data generation and loading process...")
     print("-" * 50)
+
+    start_time = time.perf_counter()
     
     print("> Clearing existing data and dropping existing collections...")
     database.drop_collections()
     print("> Creating collections...")
     database.create_collections()
 
+    if config.get_create_indexes():
+        print("> Creating indexes...")
+        database.create_indexes()
+
     generate_users(database, scale_factor)
     generate_tours(database, scale_factor)
     generate_bookings(database, scale_factor)
     generate_reviews(database, scale_factor)
 
+    end_time = time.perf_counter()
+    elapsed_time = end_time - start_time
+
     print("> Data generation and loading completed successfully!")
+    print(f"========== Execution time: {elapsed_time:.6f} seconds ==========")

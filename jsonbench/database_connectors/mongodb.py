@@ -33,6 +33,10 @@ class MongoDB:
         self.tours = self.database.get_collection("tours")
         self.bookings = self.database.get_collection("bookings")
         self.reviews = self.database.get_collection("reviews")
+
+    def create_indexes(self):
+        self.bookings.create_index("tour_id")
+        self.reviews.create_index("tour_id")
     
     def add_user(self, id, name, email, password, role, gender, nationality):
         try:
@@ -100,6 +104,21 @@ class MongoDB:
             raise Exception("Unable to add a user to the MongoDB database due to the following error: ", e)
         
     def query(self, primary_collection, query):
+        try:
+            if primary_collection == "users":
+                results = self.users.aggregate(query)
+            elif primary_collection == "tours":
+                results = self.tours.aggregate(query)
+            elif primary_collection == "bookings":
+                results = self.bookings.aggregate(query)
+            elif primary_collection == "reviews":
+                results = self.reviews.aggregate(query)
+
+            return results
+        except Exception as e:
+            raise Exception("Unable to query the MongoDB database due to the following error: ", e)
+        
+    def get_match_field(self, primary_collection, query):
         try:
             if primary_collection == "users":
                 results = self.users.aggregate(query)

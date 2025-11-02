@@ -57,6 +57,13 @@ class Couchbase:
             self.reviews = self.cb_scope.collection("reviews")
         except Exception as e:
             raise Exception("Unable to create collections in the Couchbase database due to the following error: ", e)
+        
+    def create_indexes(self):
+        try:
+            self.cb_scope.query("CREATE INDEX `bookings-tour_id` ON bookings(tour_id);")
+            self.cb_scope.query("CREATE INDEX `reviews-tour_id` ON reviews(tour_id);")
+        except Exception as e:
+            raise Exception("Unable to create indexes in the Couchbase database due to the following error: ", e)
 
     def add_user(self, id, name, email, password, role, gender, nationality):
         try:

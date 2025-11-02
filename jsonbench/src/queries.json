@@ -56,7 +56,7 @@
         "primary_collection": "tours",
         "operations": {
             "unnest": ["itinerary"],
-            "match": "itinerary.location",
+            "match": {"itinerary.location": "Jordanside"},
             "group": {
                 "by": "difficulty",
                 "aggregates": {

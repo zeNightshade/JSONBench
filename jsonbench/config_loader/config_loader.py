@@ -25,6 +25,7 @@ class ConfigLoader:
             
             self.database_type = config["database"]
             self.generate_data = config["generate_data"]
+            self.create_indexes = config["create_indexes"]
             self.scale_factor = float(config["scale_factor"])
             self.workers = int(config["workers"])
             self.duration = int(config["duration"])
@@ -43,6 +44,9 @@ class ConfigLoader:
     def get_generate_data(self):
         return self.generate_data
     
+    def get_create_indexes(self):
+        return self.create_indexes
+    
     def get_scale_factor(self):
         return self.scale_factor
     
@@ -57,3 +61,9 @@ class ConfigLoader:
     
     def get_query_sel_prob(self):
         return self.query_sel_prob
+    
+    def display_config(self):
+        if self.generate_data:
+            print(f"Database: {self.database_type}, create indexes: {self.create_indexes}, scale factor: {self.scale_factor}")
+        else:
+            print(f"Database: {self.database_type}, workers: {self.workers}, duration: {self.duration}, query selection probability: {self.query_sel_prob}")

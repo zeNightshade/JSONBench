@@ -30,7 +30,7 @@ class MongoDBQueryGenerator:
         
         return {f"${func}": inner}
 
-    def generate_query(self, template, match_filter={}):
+    def generate_query(self, template):
         operations = template["operations"]
         pipeline = []
 
@@ -57,7 +57,7 @@ class MongoDBQueryGenerator:
 
         # --- Match ---
         if "match" in operations:
-            pipeline.append({"$match": match_filter})
+            pipeline.append({"$match": operations["match"]})
 
         # --- Group ---
         if "group" in operations:

@@ -41,7 +41,7 @@ class CouchbaseQueryGenerator:
             order_parts.append(f"{qualified} {dir_str}")
         return "ORDER BY " + ", ".join(order_parts)
 
-    def generate_query(self, template, match_filter={}):
+    def generate_query(self, template):
         operations = template.get("operations", {})
         primary = template.get("primary_collection")
         from_clause = f"FROM {primary}"
@@ -99,7 +99,7 @@ class CouchbaseQueryGenerator:
         # --- WHERE (dict-style match) ---
         where_clause = ""
         if "match" in operations:
-            where_clause = self.build_where_clause(match_filter, primary)
+            where_clause = self.build_where_clause(operations["match"], primary)
 
         # --- GROUP + SELECT ---
         select_clause = "SELECT *"
@@ -153,4 +153,4 @@ class CouchbaseQueryGenerator:
         if limit_clause:
             parts.append(limit_clause)
 
-        return " \n".join(parts) + ";"
+        return " ".join(parts) + ";"

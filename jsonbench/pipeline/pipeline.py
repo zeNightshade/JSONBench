@@ -1,7 +1,7 @@
+from jsonbench.benchmark import benchmark
+from jsonbench.config_loader import config_loader
 from jsonbench.data_generator import data_generator
 from jsonbench.query_generator import query_generator
-from jsonbench.config_loader import config_loader
-
 
 def main(args):
     print("=" * 101)
@@ -17,5 +17,6 @@ def main(args):
         # Data generation mode
         data_generator.main(config)
     else:
-        # Benchmarking mode
-        query_generator.main(config)
+        # Query generation and benchmarking mode
+        queries = query_generator.main(config)
+        benchmark.main(config, queries)

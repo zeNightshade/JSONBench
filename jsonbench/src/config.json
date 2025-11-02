@@ -1,9 +1,10 @@
 {
-    "database": "couchbase",
-    "generate_data": false,
-    "scale_factor": 0.1,
+    "database": "mongodb",
+    "generate_data": true,
+    "create_indexes": true,
+    "scale_factor": 10,
     "workers": 1,
-    "duration": 300,
+    "duration": 60,
     "query_template_path": "jsonbench/src/queries.json",
     "query_selection_probability": [
         0.125, 0.125, 0.125, 0.125,
