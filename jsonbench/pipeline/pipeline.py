@@ -8,12 +8,9 @@ def main(args):
     print(f"{' ' * 40}Welcome to JSONBench!")
     print("=" * 101)
     
-    if len(args) != 0:
-        config = config_loader.ConfigLoader(args[0])
-    else:
-        config = config_loader.ConfigLoader()
+    config = config_loader.ConfigLoader()
 
-    if config.get_generate_data():
+    if len(args) != 0 and args[0] == "-d":
         # Data generation mode
         data_generator.main(config)
     else:

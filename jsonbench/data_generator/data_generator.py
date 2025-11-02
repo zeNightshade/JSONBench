@@ -1,3 +1,6 @@
+from jsonbench.database_connectors import mongodb
+from jsonbench.database_connectors import couchbase
+
 from alive_progress import alive_it
 from faker import Faker
 from datetime import datetime, timedelta
@@ -16,7 +19,7 @@ guides = []
 tours = []
 bookings = []
 
-def generate_users(database, scale_factor):
+def generate_users(databases, scale_factor):
     print("> Generating users data...")
     
     num_docs = int(1000 * scale_factor)
@@ -36,10 +39,11 @@ def generate_users(database, scale_factor):
             role = "user"
             users.append(id)
 
-        database.add_user(
-            id, name, email, password,
-            role, gender, nationality
-        )
+        for database in databases:
+            database.add_user(
+                id, name, email, password,
+                role, gender, nationality
+            )
 
     print("> Users data generated successfully!")
 
@@ -60,7 +64,7 @@ def generate_itinerary(duration):
         
     return itinerary
         
-def generate_tours(database, scale_factor):
+def generate_tours(databases, scale_factor):
     print("> Generating tours data...")
 
     num_docs = int(200 * scale_factor)
@@ -82,12 +86,13 @@ def generate_tours(database, scale_factor):
             "price": price
             })
         
-        database.add_tour(
-            id, name, description,
-            difficulty, duration, max_size,
-            price, departure, destination,
-            itinerary, guide_id
-        )
+        for database in databases:
+            database.add_tour(
+                id, name, description,
+                difficulty, duration, max_size,
+                price, departure, destination,
+                itinerary, guide_id
+            )
 
     print("> Tours data generated successfully!")
 
@@ -109,7 +114,7 @@ def generate_travellers():
     return travellers
     
 
-def generate_bookings(database, scale_factor):
+def generate_bookings(databases, scale_factor):
     print("> Generating bookings data...")
 
     num_docs = int(5000 * scale_factor)
@@ -132,15 +137,16 @@ def generate_bookings(database, scale_factor):
             "date": datetime.strptime(date, "%Y-%m-%d")
         })
 
-        database.add_booking(
-            id, user_id, tour_id,
-            travellers, total_price, date,
-            paid, travelled
-        )
+        for database in databases:
+            database.add_booking(
+                id, user_id, tour_id,
+                travellers, total_price, date,
+                paid, travelled
+            )
 
     print("> Bookings data generated successfully!")
 
-def generate_reviews(database, scale_factor):
+def generate_reviews(databases, scale_factor):
     print("> Generating reviews data...")
 
     num_docs = int(2500 * scale_factor)
@@ -154,36 +160,39 @@ def generate_reviews(database, scale_factor):
         review = fake.text(2000)
         date = fake.date_between(start_date=booking["date"]).strftime("%Y-%m-%d")
 
-        database.add_review(
-            id, booking_id, tour_id,
-            rating, review, date
-        )
+        for database in databases:
+            database.add_review(
+                id, booking_id, tour_id,
+                rating, review, date
+            )
 
     print("> Reviews data generated successfully!")
 
 def main(config):
-    database = config.get_database()
+    databases = [mongodb.MongoDB(), couchbase.Couchbase()]
     scale_factor = config.get_scale_factor()
 
-    config.display_config()
+    config.display_config(generate_data=True)
     print("> Starting data generation and loading process...")
     print("-" * 50)
 
     start_time = time.perf_counter()
     
     print("> Clearing existing data and dropping existing collections...")
-    database.drop_collections()
     print("> Creating collections...")
-    database.create_collections()
+    print("> Creating indexes...")
 
-    if config.get_create_indexes():
-        print("> Creating indexes...")
-        database.create_indexes()
+    for database in databases:
+        database.drop_collections()
+        database.create_collections()
 
-    generate_users(database, scale_factor)
-    generate_tours(database, scale_factor)
-    generate_bookings(database, scale_factor)
-    generate_reviews(database, scale_factor)
+        if config.get_create_indexes():
+            database.create_indexes()
+
+    generate_users(databases, scale_factor)
+    generate_tours(databases, scale_factor)
+    generate_bookings(databases, scale_factor)
+    generate_reviews(databases, scale_factor)
 
     end_time = time.perf_counter()
     elapsed_time = end_time - start_time

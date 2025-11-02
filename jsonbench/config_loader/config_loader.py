@@ -24,7 +24,6 @@ class ConfigLoader:
                 raise Exception("Invalid database in configuration file!")
             
             self.database_type = config["database"]
-            self.generate_data = config["generate_data"]
             self.create_indexes = config["create_indexes"]
             self.scale_factor = float(config["scale_factor"])
             self.workers = int(config["workers"])
@@ -40,9 +39,6 @@ class ConfigLoader:
     
     def get_query_gen(self):
         return self.query_gen
-    
-    def get_generate_data(self):
-        return self.generate_data
     
     def get_create_indexes(self):
         return self.create_indexes
@@ -62,8 +58,8 @@ class ConfigLoader:
     def get_query_sel_prob(self):
         return self.query_sel_prob
     
-    def display_config(self):
-        if self.generate_data:
-            print(f"Database: {self.database_type}, create indexes: {self.create_indexes}, scale factor: {self.scale_factor}")
+    def display_config(self, generate_data=False):
+        if generate_data:
+            print(f"Create indexes: {self.create_indexes}, scale factor: {self.scale_factor}")
         else:
             print(f"Database: {self.database_type}, workers: {self.workers}, duration: {self.duration}, query selection probability: {self.query_sel_prob}")
