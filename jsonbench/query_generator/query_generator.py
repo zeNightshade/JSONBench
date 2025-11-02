@@ -23,7 +23,7 @@ def generate_queries(config):
             empty = False
 
         if empty:
-            raise Exception(f"{template["name"]} returns no results upon querying! Check the match condition to ensure it exists in the database.")
+            raise Exception(f"{template['name']} returns no results upon querying! Check the match condition to ensure it exists in the database.")
         
         queries.append({
             "name": template["name"],
