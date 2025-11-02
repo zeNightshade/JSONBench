@@ -1,5 +1,5 @@
 from alive_progress import alive_bar
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 
 import numpy as np
@@ -9,15 +9,13 @@ import os
 import time
 
 
-def setup_results_dir(config):
-    name = input("Provide a name for this benchmarking run: ")
+def store_results(config, results):
     db_type = config.get_database_type()
     date = datetime.today().strftime("%Y%m%d-%H%M")
 
     os.makedirs(f"jsonbench/results/{db_type}/{date}", exist_ok=True)
 
     run_info = {
-        "name": name,
         "workers": config.get_workers(),
         "duration": config.get_duration(),
         "query_selection_probability": config.get_query_sel_prob()
@@ -26,11 +24,12 @@ def setup_results_dir(config):
     with open(f"jsonbench/results/{db_type}/{date}/info.json", 'w+') as f:
         json.dump(run_info, f, indent=4)
 
+    with open(f"jsonbench/results/{db_type}/{date}/results.json", 'w+') as f:
+        json.dump(results, f, indent=4)
+
 def benchmark(config, queries):
     database = config.get_database()
-    db_type = config.get_database_type()
     query_sel_prob = config.get_query_sel_prob()
-    date = datetime.today().strftime("%Y%m%d-%H%M")
     target_end_time = time.time() + config.get_duration()
     results = []
     
@@ -44,15 +43,12 @@ def benchmark(config, queries):
             "name": query["name"],
             "time": elapsed_time
         })
-
-    with open(f"jsonbench/results/{db_type}/{date}/results.json", 'w+') as f:
-        json.dump(results, f, indent=4)
-
-    print(f"========== Queries executed: {len(results)} ==========")
-
-def main(config, queries):
-    setup_results_dir(config)
     
+    print(f"========== Queries executed: {len(results)} ==========")
+    
+    return results
+
+def main(config, queries): 
     print("> Starting benchmarking process...")
     print("-"*50)
     print("> Benchmarking database with queries...")
@@ -61,8 +57,14 @@ def main(config, queries):
 
     with alive_bar(unknown="stars", spinner=None, monitor=False, elapsed="{elapsed}", stats=False) as bar:
         with ThreadPoolExecutor(max_workers=workers) as executor:
-            for _ in range(workers):
-                executor.submit(benchmark, config, queries)
+            future_benchmark = {executor.submit(benchmark, config, queries): _ for _ in range(workers)}
+    
+    results = []
+
+    for future in as_completed(future_benchmark):
+        results.append(future.result())
+
+    store_results(config, results)
 
     print("> Benchmarking completed successfully!")
     print("> Results of queries are saved in the results folder")

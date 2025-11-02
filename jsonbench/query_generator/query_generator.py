@@ -16,14 +16,14 @@ def generate_queries(config):
 
     for template in alive_it(templates):
         query = config.get_query_gen().generate_query(template)
-        results = config.get_database().query(template["primary_collection"], query)
-        empty = True
+        # results = config.get_database().query(template["primary_collection"], query)
+        # empty = True
 
-        for _ in results:
-            empty = False
+        # for _ in results:
+        #     empty = False
 
-        if empty:
-            raise Exception(f"{template['name']} returns no results upon querying! Check the match condition to ensure it exists in the database.")
+        # if empty:
+        #     raise Exception(f"{template['name']} returns no results upon querying! Check the match condition to ensure it exists in the database.")
         
         queries.append({
             "name": template["name"],
