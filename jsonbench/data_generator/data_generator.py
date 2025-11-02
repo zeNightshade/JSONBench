@@ -188,7 +188,7 @@ def main(config):
 
         if config.get_create_indexes():
             database.create_indexes()
-
+    
     generate_users(databases, scale_factor)
     generate_tours(databases, scale_factor)
     generate_bookings(databases, scale_factor)

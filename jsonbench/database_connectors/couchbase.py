@@ -26,6 +26,7 @@ class Couchbase:
 
         cb = cluster.bucket(bucket_name)
         self.coll_mgr = cb.collections()
+        self.query_indexes = cluster.query_indexes()
         self.cb_scope = cb.scope(self.scope_name)
 
         self.users = self.cb_scope.collection("users")
@@ -60,8 +61,8 @@ class Couchbase:
         
     def create_indexes(self):
         try:
-            self.cb_scope.query("CREATE INDEX `bookings-tour_id` ON bookings(tour_id);")
-            self.cb_scope.query("CREATE INDEX `reviews-tour_id` ON reviews(tour_id);")
+            self.cb_scope.query("CREATE INDEX `bookings-tour_id` ON bookings(tour_id);").execute()
+            self.cb_scope.query("CREATE INDEX `reviews-tour_id` ON reviews(tour_id);").execute()
         except Exception as e:
             raise Exception("Unable to create indexes in the Couchbase database due to the following error: ", e)
 

@@ -29,12 +29,10 @@ def setup_results_dir(config):
 def benchmark(config, queries):
     database = config.get_database()
     db_type = config.get_database_type()
-    duration = config.get_duration()
     query_sel_prob = config.get_query_sel_prob()
     date = datetime.today().strftime("%Y%m%d-%H%M")
+    target_end_time = time.time() + config.get_duration()
     results = []
-    
-    target_end_time = time.time() + duration
     
     while time.time() < target_end_time:
         query = np.random.choice(queries, p=query_sel_prob)
@@ -49,6 +47,8 @@ def benchmark(config, queries):
 
     with open(f"jsonbench/results/{db_type}/{date}/results.json", 'w+') as f:
         json.dump(results, f, indent=4)
+
+    print(f"========== Queries executed: {len(results)} ==========")
 
 def main(config, queries):
     setup_results_dir(config)
