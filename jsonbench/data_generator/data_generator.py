@@ -72,7 +72,7 @@ def generate_tours(databases, scale_factor):
         id = fake.unique.md5()
         name = fake.name()
         description = fake.text(500)
-        difficulty = str(np.random.choice(["easy", "intermediate", "difficult"], p=[0.5, 0.35, 0.15]))
+        difficulty = str(np.random.choice(["easy", "intermediate", "hard"], p=[0.5, 0.35, 0.15]))
         duration = random.randint(1, 31)
         max_size = random.randint(10, 100)
         price = round(random.uniform(100, 10000), 2)
