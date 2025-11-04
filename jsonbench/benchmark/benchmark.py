@@ -27,6 +27,8 @@ def store_results(config, results):
     with open(f"jsonbench/results/{db_type}/{date}/results.json", 'w+') as f:
         json.dump(results, f, indent=4)
 
+    print(f"> Results of queries are saved in: jsonbench/results/{db_type}/{date}")
+
 def benchmark(config, queries):
     database = config.get_database()
     query_sel_prob = config.get_query_sel_prob()
@@ -67,4 +69,3 @@ def main(config, queries):
     store_results(config, results)
 
     print("> Benchmarking completed successfully!")
-    print("> Results of queries are saved in the results folder")
