@@ -46,7 +46,7 @@ def benchmark(config, queries):
             "time": elapsed_time
         })
     
-    print(f"========== Queries executed: {len(results)} ==========")
+    # print(f"========== Queries executed: {len(results)} ==========")
     
     return results
 

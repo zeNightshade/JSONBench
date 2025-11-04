@@ -9,10 +9,6 @@
                 "aggregates": {
                     "total_revenue": "sum(total_price)"
                 }
-            },
-            "project": {
-                "tour_id": "tour_id",
-                "total_revenue": "tota"
             }
         }
     },
@@ -56,7 +52,7 @@
         "primary_collection": "tours",
         "operations": {
             "unnest": ["itinerary"],
-            "match": {"itinerary.location": "Lake James"},
+            "match": {"itinerary.location": "Donnafurt"},
             "group": {
                 "by": "difficulty",
                 "aggregates": {
