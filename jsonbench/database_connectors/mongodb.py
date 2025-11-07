@@ -1,5 +1,7 @@
 from pymongo import MongoClient
 
+import time
+
 
 class MongoDB:
     def __init__(self):
@@ -120,6 +122,7 @@ class MongoDB:
         
     def get_match_field(self, primary_collection, query):
         try:
+            start_time = time.perf_counter()
             if primary_collection == "users":
                 results = self.users.aggregate(query)
             elif primary_collection == "tours":
@@ -128,7 +131,9 @@ class MongoDB:
                 results = self.bookings.aggregate(query)
             elif primary_collection == "reviews":
                 results = self.reviews.aggregate(query)
+            end_time = time.perf_counter()
 
-            return results
+            elapsed_time = end_time - start_time
+            return elapsed_time
         except Exception as e:
             raise Exception("Unable to query the MongoDB database due to the following error: ", e)

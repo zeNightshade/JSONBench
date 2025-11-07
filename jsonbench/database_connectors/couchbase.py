@@ -6,6 +6,8 @@ from couchbase.exceptions import CollectionNotFoundException
 from couchbase.options import (ClusterOptions, ClusterTimeoutOptions,
                                QueryOptions)
 
+import time
+
 
 class Couchbase:
     def __init__(self):
@@ -133,7 +135,12 @@ class Couchbase:
         
     def query(self, primary_collection, query):
         try:
+            start_time = time.perf_counter()
             results = self.cb_scope.query(query)
-            return results
+            for row in results:
+                end_time = time.perf_counter()
+
+            elapsed_time = end_time - start_time
+            return elapsed_time
         except Exception as e:
             raise Exception("Unable to query the Couchbase database due to the following error: ", e)

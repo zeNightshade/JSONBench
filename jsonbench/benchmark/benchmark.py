@@ -37,10 +37,7 @@ def benchmark(config, queries):
     
     while time.time() < target_end_time:
         query = np.random.choice(queries, p=query_sel_prob)
-        start_time = time.perf_counter()
-        database.query(query["primary_collection"], query["query"])
-        end_time = time.perf_counter()
-        elapsed_time = end_time - start_time
+        elapsed_time = database.query(query["primary_collection"], query["query"])
         results.append({
             "name": query["name"],
             "time": elapsed_time
