@@ -139,8 +139,8 @@ class Couchbase:
             start_time = time.perf_counter()
             results = self.cb_scope.query(query)
             for row in results:
-                end_time = time.perf_counter()
-
+                continue
+            end_time = time.perf_counter()
             elapsed_time = end_time - start_time
             return elapsed_time
         except UnAmbiguousTimeoutException:
