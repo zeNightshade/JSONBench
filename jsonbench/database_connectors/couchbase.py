@@ -2,7 +2,7 @@ from datetime import timedelta
 
 from couchbase.auth import PasswordAuthenticator
 from couchbase.cluster import Cluster
-from couchbase.exceptions import CollectionNotFoundException
+from couchbase.exceptions import CollectionNotFoundException, UnAmbiguousTimeoutException
 from couchbase.options import (ClusterOptions, ClusterTimeoutOptions,
                                QueryOptions)
 
@@ -63,6 +63,7 @@ class Couchbase:
         
     def create_indexes(self):
         try:
+            self.cb_scope.query("CREATE INDEX `tours-id` ON tours(_id);").execute()
             self.cb_scope.query("CREATE INDEX `bookings-tour_id` ON bookings(tour_id);").execute()
             self.cb_scope.query("CREATE INDEX `reviews-tour_id` ON reviews(tour_id);").execute()
         except Exception as e:
@@ -142,5 +143,7 @@ class Couchbase:
 
             elapsed_time = end_time - start_time
             return elapsed_time
+        except UnAmbiguousTimeoutException:
+            return None
         except Exception as e:
             raise Exception("Unable to query the Couchbase database due to the following error: ", e)
