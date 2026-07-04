@@ -41,22 +41,22 @@ The benchmark currently supports MongoDB and Couchbase through language-specific
 The benchmark consists of several independent modules:
 
 - **Configuration Loader**
-  - Loads benchmark parameters from the configuration file.
+  - Loads benchmark parameters from the configuration file
 
 - **Data Generator**
-  - Generates realistic synthetic datasets.
+  - Generates realistic synthetic datasets
 
 - **Query Generator**
-  - Converts abstract query templates into database-specific query languages.
+  - Converts abstract query templates into database-specific query languages
 
 - **Benchmark Driver**
-  - Executes workloads using configurable concurrency.
+  - Executes workloads using configurable concurrency
 
 - **Database Driver**
-  - Handles communication with supported databases.
+  - Handles communication with supported databases
 
 - **Results Logger**
-  - Records benchmark execution metrics.
+  - Records benchmark execution metrics
 
 ---
 
@@ -151,6 +151,18 @@ JSONBench measures:
 - Concurrent workload performance
 
 Results are written to the configured output directory for further analysis.
+
+---
+
+## Evaluation
+
+The benchmark was evaluated using MongoDB and Couchbase under varying dataset sizes and levels of concurrency. Experimental results demonstrate the benchmark's capability of effectively evaluating the scalability of JSON document stores and identifying their differences under heavy workloads. Queries involving nested JSON structures, unnesting operations, and multi-collection joins expose distinct performance characteristics between database implementations, highlighting the benchmark's suitability for comparing document stores across a range of analytical workloads.
+
+![](img/latency-scalefactor.png)
+
+![](img/throughput-clients.png)
+
+![](img/query-time.png)
 
 ---
 
