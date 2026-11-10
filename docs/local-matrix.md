@@ -1,8 +1,8 @@
 # Local matrix rehearsal
 
 The local manifest preserves all 108 paper-matrix cells and timings. It uses the
-paper versions on fresh BONDI deployments named `jsonbench-matrix-mongo` and
-`jsonbench-matrix-cb`, with ports 27031 and 9791/9793/11221 respectively.
+paper versions on fresh BONDI deployments named `jsonbench-matrix-<output-hash>-mongodb` and
+`jsonbench-matrix-<output-hash>-couchbase`, with ports 27031 and 9791/9793/11221 respectively.
 
 Both container caps are 12 GiB, matching the proposed EC2 budget. MongoDB's
 WiredTiger cache is 6 GiB. Couchbase has 4 GiB Data/bucket and 2 GiB Index quotas;
@@ -33,3 +33,13 @@ This run is a local rehearsal, not an EC2 hardware reproduction. Host CPU, Docke
 virtualization, filesystem cache and storage still differ. Do not pool these
 results with EC2 observations. Allow at least nine hours plus generation, loading,
 verification and draining. Keep the machine awake and avoid other heavy workloads.
+
+## Couchbase restart limitation observed in acceptance
+
+Couchbase Community 8.0.0 failed to restart one fresh test deployment, reporting
+both a legacy bucket-name directory and a UUID bucket directory. That failed
+acceptance deployment and its logs were retained, not repaired by moving database
+files. The wrapper now creates Couchbase only when its phase starts, avoiding an
+unnecessary pre-run stop/start. A new output root uses new deployment names.
+If a resumed Couchbase deployment reports this error, stop and investigate; the
+runner does not claim to repair that server-side restart failure.
