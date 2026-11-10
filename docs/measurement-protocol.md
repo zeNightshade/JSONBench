@@ -72,13 +72,19 @@ Each unique run directory contains:
 Connection credentials are not copied to metadata. Error messages come from the
 native driver and may contain query details; inspect before sharing logs.
 
-Detailed database settings and verified loaded-dataset receipts,
+Detailed database settings,
 index readiness and validation on the paper database versions remain release
-prerequisites tracked in TODO.md. A local dataset manifest does not prove that dataset
-is currently loaded in the server.
+prerequisites tracked in TODO.md. A local manifest alone does not prove which data is loaded; the separate
+verification report records the comparison performed for this run.
 
 Database metadata is captured before worker startup; failure to inspect it aborts
 the run rather than silently omitting it. MongoDB records collection index specs;
 Couchbase records the Query service version and system:indexes entries for the
 selected bucket/scope. These snapshots do not capture all server tuning settings
-or prove the loaded dataset matches a local manifest.
+or replace the full loaded-document verification.
+
+If `dataset_directory` is configured, full content verification occurs before the
+worker origin. Its report is saved as `loaded_dataset_verification`; mismatches
+abort the run. This pre-scan warms caches and uses the startup watchdog budget.
+The report records Q4 visit selectivity without modifying its fixed predicate.
+Keep data immutable: verification does not prevent subsequent writes.

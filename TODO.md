@@ -46,7 +46,7 @@ code that produced the historical logs.
 - [x] Validate corresponding MongoDB and Couchbase results on a small generated dataset (SF=0.05); verify loaded documents and short concurrent-run metrics.
 - [x] Preserve Q8's traveller-weighted tour-review average; update its description rather than changing joins.
 - [x] Preserve Q4 itinerary-visit counting and Q1/Q7 semantics; update descriptions without changing operations.
-- [ ] Validate Q4 filter selectivity; the existing fixed location can be absent from generated data.
+- [x] Report Q4 matching tours/visits and visit selectivity from verified loaded data, preserving the fixed location and explicitly reporting zero matches.
 - [ ] Correct the paper's Q3 operation table: the checked-in template does not unnest travellers.
 
 ## P1 — Reproducible datasets and experimental records
@@ -55,6 +55,7 @@ code that produced the historical logs.
 - [x] Remove global mutable generator state.
 - [x] Generate a canonical dataset independently of database loading; load identical documents into both systems.
 - [x] Save dataset checksums, sizes, generator configuration, and scale factor.
+- [x] Compare all loaded documents against the artifact before configured dataset runs; persist verification counts, time and manifest checksum.
 - [x] Validate the complete manifest, file sizes/counts, JSON records and unique document IDs before connecting or replacing collections.
 - [x] Record code revision, dependency/server versions, native queries, and actual index definitions.
 - [ ] Record database settings, seeds, query probabilities, timeout policy, and actual run duration.

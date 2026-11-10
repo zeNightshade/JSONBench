@@ -61,6 +61,9 @@ class MongoDB:
     def load_documents(self, collection, documents):
         self.database[collection].insert_many(documents)
 
+    def iter_documents(self, collection):
+        return self.database[collection].find({})
+
     def close(self):
         self.client.close()
 

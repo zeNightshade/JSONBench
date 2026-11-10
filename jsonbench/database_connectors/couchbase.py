@@ -10,6 +10,7 @@ from couchbase.exceptions import (
     TimeoutException,
     UnAmbiguousTimeoutException,
 )
+from couchbase.n1ql import QueryScanConsistency
 from couchbase.options import ClusterOptions, QueryOptions
 
 from .outcome import consume
@@ -120,6 +121,14 @@ class Couchbase:
         destination = self.cb_scope.collection(collection)
         for document in documents:
             destination.upsert(document["_id"], document)
+
+    def iter_documents(self, collection):
+        if collection not in {"users", "tours", "bookings", "reviews"}:
+            raise ValueError("Unexpected collection")
+        return self.cb_scope.query(
+            f"SELECT RAW d FROM `{collection}` AS d",
+            QueryOptions(scan_consistency=QueryScanConsistency.REQUEST_PLUS),
+        )
 
     def close(self):
         self.cluster.close()

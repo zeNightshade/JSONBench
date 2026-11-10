@@ -231,3 +231,28 @@ Live correctness validation and the remaining TODO items are still required befo
 publication reruns. The eight core queries and both query connectors pass the opt-in
 [BONDI live fixture checks](docs/live-validation.md) on MongoDB 8.0.16 and Couchbase
 Community 7.6.2. Generated-data equivalence and the paper versions remain pending.
+
+### Verify loaded content and Q4 selectivity
+
+```sh
+python -m jsonbench --verify
+```
+
+This read-only check validates the configured artifact and compares every document
+in all four loaded collections, independent of row order. It rejects missing,
+extra, duplicate or changed documents. JSON object order and integral numeric
+representations (for example 1 and 1.0) are treated as equivalent. A temporary
+SQLite index limits comparison memory use; allow sufficient temporary disk space.
+
+When `dataset_directory` is configured, benchmark runs perform this check before
+worker startup and save the report in `info.json` as `loaded_dataset_verification`.
+Failures abort the run. The report includes the manifest checksum, verification
+time and Q4's unchanged location, matching tours, matching itinerary visits and
+visit selectivity. Zero matches are reported, not replaced with another location.
+
+Full verification scans warm caches. These runs therefore include a pre-scan;
+account for that in the experimental cache policy. Large datasets may require a
+larger `startup_timeout_seconds` than its default 60 seconds. Verification is a
+point-in-time check, not a transaction spanning both systems: keep datasets and
+loaded collections immutable during verification and benchmarking. Without a
+configured dataset directory, the runner cannot claim loaded-data verification.

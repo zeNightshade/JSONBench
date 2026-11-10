@@ -153,6 +153,11 @@ def test_generated_pipeline(tmp_path):
             started = {r["attempt_id"]: r for r in events if r["event"] == "started"}
             completed = [r for r in events if r["event"] == "completed"]
             assert info["state"] == "complete"
+            verification = info["loaded_dataset_verification"]
+            assert verification["collections"] == {
+                name: entry["count"] for name, entry in manifest["collections"].items()
+            }
+            assert verification["q4_selectivity"]["zero_matches"]
             assert set(started) == {r["attempt_id"] for r in completed}
             assert len(started) == len(completed)
             assert all(r["status"] == "success" for r in completed), completed

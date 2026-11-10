@@ -146,6 +146,10 @@ def main(config, queries, *, run_path=None, on_start=None):
         "queries": queries,
         "backend": config.get_database_type(),
     }
+    if "dataset_directory" in settings:
+        from jsonbench.data_generator.verification import verify_config
+
+        info["loaded_dataset_verification"] = verify_config(config)
     info["database_metadata"] = database.experiment_metadata()
     info["python_version"] = platform.python_version()
     info["dependencies"] = {}
