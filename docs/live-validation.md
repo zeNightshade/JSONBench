@@ -99,7 +99,8 @@ instances, named `jsonbench-paper-mongo` and `jsonbench-paper-cb`. MongoDB uses
 port 27030, a 1024 MiB container cap and 0.25 GiB WiredTiger cache. Couchbase
 uses ports 9691/9693/11220, bucket `jsonbench_paper`, and a 4096 MiB container
 cap. These are local correctness settings, not a reproduction of paper hardware.
-The paper's Couchbase edition still needs confirmation.
+The paper uses Couchbase Community 8.0.0, confirmed by the author; the deployed
+edition and version match.
 
 All 18 fixture checks passed. The generated SF=0.05 test also passed on these
 versions: 435 documents verified, all eight query results equivalent, and 2,964
