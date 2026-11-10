@@ -15,53 +15,58 @@ code that produced the historical logs.
 - [x] Read run duration and worker count from metadata; validate notebook mapping against metadata.
 - [x] Add unit tests for averaging, null handling, metadata validation, and independent aggregation.
 - [ ] Resolve what historical nulls represent with the experiment author; do not assume a logged error type.
-- [ ] Identify the exact execution code used for the original experiments (MongoDB currently returns a cursor).
+- [ ] Identify the exact execution code used for the original experiments (the original checked-in MongoDB connector returned a cursor).
 
 ## P0 — Make execution measurements trustworthy before rerunning
 
-- [ ] Repair MongoDB execution: consume all results and return a consistently structured timed outcome.
-- [ ] Record success, timeout, and other errors explicitly, including elapsed time and error details.
-- [ ] Use a shared monotonic clock and common worker phase boundaries.
-- [ ] Implement explicit warm-up, measurement, and draining phases.
-- [ ] Define which attempts/completions belong to each metric; save actual phase timestamps.
-- [ ] Stop admissions at the deadline; handle late completions separately.
-- [ ] Define per-query deadlines and a bounded, documented drain policy.
-- [ ] Calculate successful completion throughput from the measured interval, never from all records.
+- [x] Repair MongoDB execution: consume all results and return a consistently structured timed outcome.
+- [x] Record success, timeout, and other errors explicitly, including elapsed time and error details.
+- [x] Use a shared monotonic clock and common worker phase boundaries.
+- [x] Implement explicit warm-up, measurement, and draining phases.
+- [x] Define which attempts/completions belong to each metric; save actual phase timestamps.
+- [x] Stop admissions at the deadline; handle late completions separately.
+- [x] Add explicit driver per-query deadlines and document drain behaviour.
+- [ ] Add a hard process-level drain watchdog; native driver cleanup can exceed its requested deadline.
+- [x] Calculate successful completion throughput from the measured interval, never from all records.
 - [ ] Investigate Couchbase's systematic Q5–Q8 null timings at SF=10 and widespread nulls at larger scales.
-- [ ] Test timing boundaries, full cursor consumption, failures, timeouts, and draining with controlled fakes.
+- [x] Test timing boundaries, full cursor consumption, failures, timeouts, and draining with controlled fakes.
 
 ## P0 — Establish query correctness
 
-- [ ] Fix MongoDB projection's literal-string condition.
-- [ ] Fix Couchbase field-prefix rewriting (lstrip is not prefix removal).
-- [ ] Prevent translators from mutating input templates.
-- [ ] Unify and validate the sort representation.
-- [ ] Parameterise/escape SQL++ literal values and identifiers appropriately.
-- [ ] Define null/missing predicate semantics and reject unsupported expressions.
+- [x] Fix MongoDB projection's literal-string condition.
+- [x] Fix Couchbase field-prefix rewriting (lstrip is not prefix removal).
+- [x] Prevent translators from mutating input templates.
+- [x] Unify and validate the sort representation.
+- [x] Parameterise/escape SQL++ literal values and identifiers appropriately.
+- [x] Reject unsupported expressions and null/missing predicates rather than silently compiling them.
+- [ ] Define and validate a shared null/missing predicate contract.
 - [ ] Define joins, duplicate handling, empty arrays, grouping, ordering, and result comparison semantics.
 - [ ] Validate all eight queries against independently calculated expected answers on small fixtures.
 - [ ] Validate corresponding MongoDB and Couchbase results on generated data.
 - [ ] Clarify Q8's intended rating weighting.
+- [ ] Clarify Q4 visits versus distinct tours and validate its filter selectivity.
 - [ ] Correct the paper's Q3 operation table: the checked-in template does not unnest travellers.
 
 ## P1 — Reproducible datasets and experimental records
 
-- [ ] Seed every random generator and fix the date reference.
-- [ ] Remove global mutable generator state.
-- [ ] Generate a canonical dataset independently of database loading; load identical documents into both systems.
-- [ ] Save dataset checksums, sizes, generator configuration, and scale factor.
+- [x] Seed every random generator and fix the date reference.
+- [x] Remove global mutable generator state.
+- [x] Generate a canonical dataset independently of database loading; load identical documents into both systems.
+- [x] Save dataset checksums, sizes, generator configuration, and scale factor.
 - [ ] Record code revision, dependency/database versions, native queries, and index definitions.
 - [ ] Record database settings, seeds, query probabilities, timeout policy, and actual run duration.
-- [ ] Record attempt identity, worker identity, and start/finish offsets.
-- [ ] Persist observations incrementally and use unique run IDs.
-- [ ] Test reproducibility, repeated generation, and persistence under interruption.
+- [x] Record attempt identity, worker identity, and start/finish offsets.
+- [x] Persist observations incrementally and use unique run IDs.
+- [x] Test reproducibility, repeated generation, and persistence under interruption.
 
 ## P1 — Configuration and database lifecycle
 
-- [ ] Remove hard-coded connections and credentials; configuration parsing must not connect.
-- [ ] Separate domain-specific document creation from database connectors.
-- [ ] Make replacement of collections explicit and isolate benchmark-owned data.
-- [ ] Establish connection cleanup and index-readiness checks.
+- [x] Make connection settings configurable; configuration parsing must not connect.
+- [x] Separate domain-specific document creation from database connectors.
+- [x] Make replacement of collections explicit.
+- [ ] Validate destination ownership before destructive loading; currently requires a dedicated destination configured by the operator.
+- [x] Close connections at pipeline exit and watch Couchbase secondary indexes after creation.
+- [ ] Validate connection lifecycle and index availability against running servers.
 
 ## P2 — Repeated experiments and publication analysis
 

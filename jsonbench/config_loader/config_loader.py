@@ -1,65 +1,88 @@
-from jsonbench.database_connectors import mongodb
-from jsonbench.database_connectors import couchbase
-
-from jsonbench.query_generator import mdb_query_gen
-from jsonbench.query_generator import cb_query_gen
+"""Validated configuration; loading configuration never opens a connection."""
 
 import json
+import math
 
 
 class ConfigLoader:
     def __init__(self, path="jsonbench/src/config.json"):
-        self.path = path
+        with open(path) as file:
+            self.settings = json.load(file)
+        self.database_type = self.settings["database"]
+        if self.database_type not in {"mongodb", "couchbase"}:
+            raise ValueError("Unknown database")
+        for key, default, allow_zero in [
+            ("duration", 180, False),
+            ("warmup_seconds", 60, True),
+            ("query_timeout_seconds", 60, False),
+        ]:
+            value = self.settings.setdefault(key, default)
+            if (
+                isinstance(value, bool)
+                or not isinstance(value, (int, float))
+                or not math.isfinite(value)
+            ):
+                raise ValueError(f"{key} must be finite")
+            if value < 0 or (value == 0 and not allow_zero):
+                raise ValueError(f"Invalid {key}")
+        workers = self.settings["workers"]
+        if type(workers) is not int or workers <= 0:
+            raise ValueError("workers must be a positive integer")
+        seed = self.settings.setdefault("seed", 0)
+        if type(seed) is not int:
+            raise ValueError("seed must be an integer")
+        self.database = None
 
-        with open(self.path) as f:
-            config = json.load(f)
-
-            if config["database"] == "mongodb":
-                self.database = mongodb.MongoDB()
-                self.query_gen = mdb_query_gen.MongoDBQueryGenerator()
-            elif config["database"] == "couchbase":
-                self.database = couchbase.Couchbase()
-                self.query_gen = cb_query_gen.CouchbaseQueryGenerator()
-            else:
-                raise Exception("Invalid database in configuration file!")
-            
-            self.database_type = config["database"]
-            self.create_indexes = config["create_indexes"]
-            self.scale_factor = float(config["scale_factor"])
-            self.workers = int(config["workers"])
-            self.duration = int(config["duration"])
-            self.query_template_path = config["query_template_path"]
-            self.query_sel_prob = config["query_selection_probability"]
-            
     def get_database(self):
+        if self.database is None:
+            connection = self.settings.get("connection", {})
+            if self.database_type == "mongodb":
+                from jsonbench.database_connectors.mongodb import MongoDB
+
+                self.database = MongoDB(**connection)
+            else:
+                from jsonbench.database_connectors.couchbase import Couchbase
+
+                self.database = Couchbase(**connection)
         return self.database
-    
+
+    def close(self):
+        if self.database is not None:
+            self.database.close()
+            self.database = None
+
+    def get_query_gen(self):
+        if self.database_type == "mongodb":
+            from jsonbench.query_generator.mdb_query_gen import MongoDBQueryGenerator
+
+            return MongoDBQueryGenerator()
+        from jsonbench.query_generator.cb_query_gen import CouchbaseQueryGenerator
+
+        return CouchbaseQueryGenerator()
+
     def get_database_type(self):
         return self.database_type
-    
-    def get_query_gen(self):
-        return self.query_gen
-    
+
     def get_create_indexes(self):
-        return self.create_indexes
-    
+        return self.settings["create_indexes"]
+
     def get_scale_factor(self):
-        return self.scale_factor
-    
+        return float(self.settings["scale_factor"])
+
     def get_workers(self):
-        return self.workers
-    
+        return self.settings["workers"]
+
     def get_duration(self):
-        return self.duration
-    
+        return self.settings["duration"]
+
     def get_query_template_path(self):
-        return self.query_template_path
-    
+        return self.settings["query_template_path"]
+
     def get_query_sel_prob(self):
-        return self.query_sel_prob
-    
+        return self.settings["query_selection_probability"]
+
     def display_config(self, generate_data=False):
-        if generate_data:
-            print(f"Create indexes: {self.create_indexes}, scale factor: {self.scale_factor}")
-        else:
-            print(f"Database: {self.database_type}, workers: {self.workers}, duration: {self.duration}, query selection probability: {self.query_sel_prob}")
+        print(
+            f"Database: {self.database_type}; workers: {self.get_workers()}; "
+            f"measurement seconds: {self.get_duration()}"
+        )

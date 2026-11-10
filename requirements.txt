@@ -1,8 +1,7 @@
-alive-progress
-bcrypt
-couchbase
-Faker
-ipykernel
-numpy
-pymongo
-python-dateutil
+alive-progress>=3,<4
+couchbase>=4.6,<5
+Faker>=37,<39
+ipykernel>=6,<8
+matplotlib>=3.9,<4
+pandas>=2.2,<4
+pymongo>=4.13,<5

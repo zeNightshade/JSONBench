@@ -1,201 +1,190 @@
-from jsonbench.database_connectors import mongodb
-from jsonbench.database_connectors import couchbase
+"""Generate canonical JSONL datasets without database connections."""
 
-from alive_progress import alive_it
-from faker import Faker
-from datetime import datetime, timedelta
-
-import numpy as np
-
-import bcrypt
+import hashlib
+import json
+import math
 import random
-import time
+from datetime import date, timedelta
+from importlib.metadata import version
+from pathlib import Path
+
+from faker import Faker
 
 
-fake = Faker()
+class DatasetGenerator:
+    def __init__(self, *, seed, reference_date):
+        self.rng = random.Random(seed)
+        self.fake = Faker("en_US")
+        self.fake.seed_instance(seed)
+        self.reference = date.fromisoformat(reference_date)
+        self.seed = seed
 
-users = []
-guides = []
-tours = []
-bookings = []
-
-def generate_users(databases, scale_factor):
-    print("> Generating users data...")
-    
-    num_docs = int(1000 * scale_factor)
-    for _ in alive_it(range(num_docs)):
-        id = fake.unique.md5()
-        name = fake.name()
-        email = fake.email()
-        # password = bcrypt.hashpw(fake.password(16).encode(), bcrypt.gensalt()).decode()
-        password = fake.password(16)
-        gender = fake.passport_gender()
-        nationality = fake.country()
-
-        if _ >= (num_docs * 0.9):
-            role = "guide"
-            guides.append(id)
-        else:
-            role = "user"
-            users.append(id)
-
-        for database in databases:
-            database.add_user(
-                id, name, email, password,
-                role, gender, nationality
+    def records(self, scale):
+        if (
+            isinstance(scale, bool)
+            or not isinstance(scale, (int, float))
+            or not math.isfinite(scale)
+            or scale < 0.01
+        ):
+            raise ValueError("Scale factor must be finite and at least 0.01")
+        # State is local to this invocation; instantiate a fresh generator per artifact.
+        users, guides, tours, bookings = [], [], [], []
+        fake, rng = self.fake, self.rng
+        count = int(1000 * scale)
+        for index in range(count):
+            identity = f"user-{index}"
+            role = "guide" if index >= int(count * 0.9) else "user"
+            (guides if role == "guide" else users).append(identity)
+            yield (
+                "users",
+                {
+                    "_id": identity,
+                    "name": fake.name(),
+                    "email": fake.email(),
+                    "password": fake.password(16),
+                    "role": role,
+                    "gender": rng.choice(["F", "M", "X"]),
+                    "nationality": fake.country(),
+                },
+            )
+        for index in range(int(200 * scale)):
+            duration = rng.randint(1, 31)
+            start = self.reference - timedelta(days=rng.randint(duration, 3650))
+            itinerary, day = [], 0
+            while day < duration:
+                itinerary.append(
+                    {"location": fake.city(), "date": (start + timedelta(days=day)).isoformat()}
+                )
+                day += rng.randint(1, max(1, duration // 4))
+            tour = {
+                "_id": f"tour-{index}",
+                "name": fake.name(),
+                "description": fake.text(500),
+                "difficulty": rng.choices(["easy", "intermediate", "hard"], [0.5, 0.35, 0.15])[0],
+                "duration": duration,
+                "max_group_size": rng.randint(10, 100),
+                "rrp": round(rng.uniform(100, 10000), 2),
+                "departure": fake.country(),
+                "destination": fake.country(),
+                "itinerary": itinerary,
+                "guide_id": rng.choice(guides),
+            }
+            tours.append((tour["_id"], tour["rrp"]))
+            yield "tours", tour
+        for index in range(int(5000 * scale)):
+            tour, price = rng.choice(tours)
+            travellers = [
+                {
+                    "name": fake.name(),
+                    "age": rng.randint(1, 100),
+                    "gender": rng.choice(["F", "M", "X"]),
+                    "nationality": fake.country(),
+                }
+                for _ in range(rng.randint(1, 10))
+            ]
+            when = self.reference - timedelta(days=rng.randint(1, 3650))
+            identity = f"booking-{index}"
+            bookings.append((identity, tour, when))
+            yield (
+                "bookings",
+                {
+                    "_id": identity,
+                    "user_id": rng.choice(users),
+                    "tour_id": tour,
+                    "travellers": travellers,
+                    "total_price": round(price * len(travellers), 2),
+                    "date": when.isoformat(),
+                    "paid": rng.random() < 0.8,
+                    "travelled": rng.random() < 0.75,
+                },
+            )
+        for index in range(int(2500 * scale)):
+            booking, tour, when = rng.choice(bookings)
+            review_date = when + timedelta(days=rng.randint(1, (self.reference - when).days))
+            yield (
+                "reviews",
+                {
+                    "_id": f"review-{index}",
+                    "booking_id": booking,
+                    "tour_id": tour,
+                    "rating": rng.randint(1, 5),
+                    "review": fake.text(2000),
+                    "date": review_date.isoformat(),
+                },
             )
 
-    print("> Users data generated successfully!")
 
-def generate_itinerary(duration):
-    itinerary = []
-    start_date = fake.date_between(start_date=datetime.today()-timedelta(days=3650))
-    _ = 0
-    while _ < duration:
-        location = fake.city()
-        date = (start_date + timedelta(days=_)).strftime("%Y-%m-%d")
+def generate_dataset(path, *, scale, seed, reference_date):
+    path = Path(path)
+    path.mkdir(parents=True, exist_ok=False)
+    counts = {}
+    generator = DatasetGenerator(seed=seed, reference_date=reference_date)
+    handles = {}
+    try:
+        for collection, record in generator.records(scale):
+            if collection not in handles:
+                handles[collection] = (path / f"{collection}.jsonl").open("w")
+            handles[collection].write(json.dumps(record, sort_keys=True, allow_nan=False) + "\n")
+            counts[collection] = counts.get(collection, 0) + 1
+    finally:
+        for handle in handles.values():
+            handle.close()
+    files = {}
+    for collection, count in counts.items():
+        file = path / f"{collection}.jsonl"
+        with file.open("rb") as handle:
+            digest = hashlib.file_digest(handle, "sha256").hexdigest()
+        files[collection] = {"count": count, "bytes": file.stat().st_size, "sha256": digest}
+    manifest = {
+        "format_version": 1,
+        "generator_version": 1,
+        "seed": seed,
+        "reference_date": reference_date,
+        "scale_factor": scale,
+        "faker_version": version("Faker"),
+        "collections": files,
+    }
+    (path / "manifest.json").write_text(json.dumps(manifest, indent=2))
+    return manifest
 
-        itinerary.append({
-            "location": location,
-            "date": date
-        })
 
-        _ += random.randint(1, max(1, int(duration/4)))
-        
-    return itinerary
-        
-def generate_tours(databases, scale_factor):
-    print("> Generating tours data...")
+def load_dataset(config):
+    path = Path(config.settings["dataset_directory"])
+    manifest = json.loads((path / "manifest.json").read_text())
+    # Verify every file before opening a connection or replacing any collection.
+    for collection, metadata in manifest["collections"].items():
+        if collection not in {"users", "tours", "bookings", "reviews"}:
+            raise ValueError("Unexpected dataset collection")
+        with (path / f"{collection}.jsonl").open("rb") as file:
+            if hashlib.file_digest(file, "sha256").hexdigest() != metadata["sha256"]:
+                raise ValueError(f"Dataset checksum mismatch: {collection}")
+    if config.settings.get("replace_collections") is not True:
+        raise ValueError(
+            "Loading requires explicit replace_collections=true for benchmark-owned collections"
+        )
+    database = config.get_database()
+    database.drop_collections()
+    database.create_collections()
+    for collection in manifest["collections"]:
+        with (path / f"{collection}.jsonl").open() as file:
+            batch = []
+            for line in file:
+                batch.append(json.loads(line))
+                if len(batch) == 500:
+                    database.load_documents(collection, batch)
+                    batch = []
+            if batch:
+                database.load_documents(collection, batch)
+    if config.get_create_indexes():
+        database.create_indexes()
+    return manifest
 
-    num_docs = int(200 * scale_factor)
-    for _ in alive_it(range(num_docs)):
-        id = fake.unique.md5()
-        name = fake.name()
-        description = fake.text(500)
-        difficulty = str(np.random.choice(["easy", "intermediate", "hard"], p=[0.5, 0.35, 0.15]))
-        duration = random.randint(1, 31)
-        max_size = random.randint(10, 100)
-        price = round(random.uniform(100, 10000), 2)
-        departure = fake.country()
-        destination = fake.country()
-        itinerary = generate_itinerary(duration)
-        guide_id = random.choice(guides)
-
-        tours.append({
-            "tour_id": id,
-            "price": price
-            })
-        
-        for database in databases:
-            database.add_tour(
-                id, name, description,
-                difficulty, duration, max_size,
-                price, departure, destination,
-                itinerary, guide_id
-            )
-
-    print("> Tours data generated successfully!")
-
-def generate_travellers():
-    travellers = []
-    for _ in range(random.randint(1, 10)):
-        name = fake.name()
-        age = random.randint(1, 100)
-        gender = fake.passport_gender()
-        nationality = fake.country()
-
-        travellers.append({
-            "name": name,
-            "age": age,
-            "gender": gender,
-            "nationality": nationality
-        })
-    
-    return travellers
-    
-
-def generate_bookings(databases, scale_factor):
-    print("> Generating bookings data...")
-
-    num_docs = int(5000 * scale_factor)
-    for _ in alive_it(range(num_docs)):
-        tour = random.choice(tours)
-
-        id = fake.unique.md5()
-        user_id = random.choice(users)
-        tour_id = tour["tour_id"]
-        travellers = generate_travellers()
-        total_price = len(travellers) * tour["price"]
-        date = fake.date_between(start_date=datetime.today()-timedelta(days=3650)).strftime("%Y-%m-%d")
-        paid = bool(np.random.choice([True, False], p=[0.8, 0.2]))
-        travelled = bool(np.random.choice([True, False], p=[0.75, 0.25]))
-
-        bookings.append({
-            "booking_id": id,
-            "user_id": user_id,
-            "tour_id": tour_id,
-            "date": datetime.strptime(date, "%Y-%m-%d")
-        })
-
-        for database in databases:
-            database.add_booking(
-                id, user_id, tour_id,
-                travellers, total_price, date,
-                paid, travelled
-            )
-
-    print("> Bookings data generated successfully!")
-
-def generate_reviews(databases, scale_factor):
-    print("> Generating reviews data...")
-
-    num_docs = int(2500 * scale_factor)
-    for _ in alive_it(range(num_docs)):
-        booking = random.choice(bookings)
-
-        id = fake.unique.md5()
-        booking_id = booking["booking_id"]
-        tour_id = booking["tour_id"]
-        rating = random.randint(1, 5)
-        review = fake.text(2000)
-        date = fake.date_between(start_date=booking["date"]).strftime("%Y-%m-%d")
-
-        for database in databases:
-            database.add_review(
-                id, booking_id, tour_id,
-                rating, review, date
-            )
-
-    print("> Reviews data generated successfully!")
 
 def main(config):
-    databases = [mongodb.MongoDB(), couchbase.Couchbase()]
-    scale_factor = config.get_scale_factor()
-
-    config.display_config(generate_data=True)
-    print("> Starting data generation and loading process...")
-    print("-" * 50)
-
-    start_time = time.perf_counter()
-    
-    print("> Clearing existing data and dropping existing collections...")
-    print("> Creating collections...")
-    print("> Creating indexes...")
-
-    for database in databases:
-        database.drop_collections()
-        database.create_collections()
-
-        if config.get_create_indexes():
-            database.create_indexes()
-    
-    generate_users(databases, scale_factor)
-    generate_tours(databases, scale_factor)
-    generate_bookings(databases, scale_factor)
-    generate_reviews(databases, scale_factor)
-
-    end_time = time.perf_counter()
-    elapsed_time = end_time - start_time
-
-    print("> Data generation and loading completed successfully!")
-    print(f"========== Execution time: {elapsed_time:.6f} seconds ==========")
+    settings = config.settings
+    return generate_dataset(
+        settings["dataset_directory"],
+        scale=config.get_scale_factor(),
+        seed=settings["seed"],
+        reference_date=settings["reference_date"],
+    )

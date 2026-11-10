@@ -126,16 +126,33 @@ Key configurable parameters include:
 pip install -r requirements.txt
 ```
 
-### Generate benchmark data
+### Generate canonical benchmark data (offline)
 
 ```bash
-python jsonbench -d
+python -m jsonbench -d
+```
+
+Generation creates a new dataset directory and refuses to overwrite one. Configure
+`dataset_directory`, `seed`, `reference_date`, and `scale_factor` in
+`jsonbench/src/config.json`. This generator version changes the old random sequence;
+its artifacts are a new benchmark dataset, not a reconstruction of historical data.
+
+### Load the same artifact into a selected database
+
+Set `database` and optional `connection` in the configuration. MongoDB connection
+keys are `uri` and `database`; Couchbase keys are `uri`, `username`, `password`,
+`bucket`, and `scope`. Loading replaces the four benchmark collections and therefore
+requires `replace_collections: true` explicitly. Use a dedicated benchmark database
+or scope. Generate once, then load that artifact separately into each backend.
+
+```sh
+python -m jsonbench --load
 ```
 
 ### Execute benchmark
 
 ```bash
-python jsonbench
+python -m jsonbench
 ```
 
 ---
@@ -172,7 +189,6 @@ analysis and [TODO.md](TODO.md) for remaining work before rerunning experiments.
 - SQL++
 - Faker
 - pandas
-- NumPy
 - Matplotlib
 
 ---
@@ -192,10 +208,12 @@ so reanalysis cannot establish exact throughput or query equivalence.
 Run the offline analysis tests with:
 
 ```sh
-uv run --with pytest python -m pytest tests
-uv run --with ruff ruff check jsonbench/analysis.py tests
+uv run --with-requirements requirements-dev.txt python -m pytest tests
+uv run --with ruff ruff check jsonbench tests
 ```
 
-The notebook additionally requires pandas and matplotlib. No database is needed
-for these tests or for reanalysing existing logs. Execution and translation fixes
-remain pending; do not use the existing runner for publication reruns yet.
+Python 3.11+ is required. No database is needed for the unit tests or legacy analysis.
+See [measurement protocol](docs/measurement-protocol.md) and
+[template semantics](docs/query-templates.md) for the repaired runner and compiler.
+Live correctness validation and the remaining TODO items are still required before
+publication reruns. These code fixes have not been validated against running servers.
