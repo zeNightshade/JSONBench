@@ -1,5 +1,9 @@
 # EC2 execution guide
 
+**Current deployment:** see [Native EC2 execution](ec2-native.md) for the two
+professor-provided hosts. The Docker/two-volume provisioning below is the earlier
+setup and is not used for these native runs.
+
 ## Fixed initial protocol
 
 `experiments/paper-matrix.json` expands to 108 runs: MongoDB 8.2.1 and Couchbase
