@@ -63,7 +63,8 @@ Each unique run directory contains:
 
 - `info.json`: format, state, revision, tracked-change indicator, backend, worker
   count, phase durations, seed, query timeout, scale factor, concrete queries,
-  Python/dependency versions, optional dataset manifest/checksum, and actual duration.
+  Python/dependency versions, server version, destination database or bucket/scope,
+  actual index definitions, optional dataset manifest/checksum, and actual duration.
 - `events.jsonl`: started/completed records, worker and attempt identity, offsets,
   status, elapsed query duration, row count and error type/message.
 - `summary.json`: metrics above, written only after successful runner completion.
@@ -71,7 +72,13 @@ Each unique run directory contains:
 Connection credentials are not copied to metadata. Error messages come from the
 native driver and may contain query details; inspect before sharing logs.
 
-Server versions, detailed database settings, verified loaded-dataset receipts,
+Detailed database settings and verified loaded-dataset receipts,
 index readiness and validation on the paper database versions remain release
 prerequisites tracked in TODO.md. A local dataset manifest does not prove that dataset
 is currently loaded in the server.
+
+Database metadata is captured before worker startup; failure to inspect it aborts
+the run rather than silently omitting it. MongoDB records collection index specs;
+Couchbase records the Query service version and system:indexes entries for the
+selected bucket/scope. These snapshots do not capture all server tuning settings
+or prove the loaded dataset matches a local manifest.

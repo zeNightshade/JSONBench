@@ -6,12 +6,14 @@ from couchbase.exceptions import (
     AmbiguousTimeoutException,
     CollectionNotFoundException,
     CouchbaseException,
+    DocumentNotFoundException,
     TimeoutException,
     UnAmbiguousTimeoutException,
 )
 from couchbase.options import ClusterOptions, QueryOptions
 
 from .outcome import consume
+from .ownership import MARKER, MARKER_COLLECTION, MARKER_KEY, validate_ownership
 
 
 class Couchbase:
@@ -23,6 +25,7 @@ class Couchbase:
         bucket="tour_bookings",
         scope="_default",
     ):
+        self.bucket_name = bucket
         bucket_name = bucket
         self.scope_name = scope
         auth = PasswordAuthenticator(
@@ -49,6 +52,38 @@ class Couchbase:
         self.tours = self.cb_scope.collection("tours")
         self.bookings = self.cb_scope.collection("bookings")
         self.reviews = self.cb_scope.collection("reviews")
+
+    def ensure_ownership(self):
+        scopes = self.coll_mgr.get_all_scopes()
+        names = {
+            collection.name for scope in scopes if scope.name == self.scope_name
+            for collection in scope.collections
+        }
+        marker = None
+        metadata = self.cb_scope.collection(MARKER_COLLECTION)
+        if MARKER_COLLECTION in names:
+            try:
+                marker = metadata.get(MARKER_KEY).content_as[dict]
+            except DocumentNotFoundException:
+                pass
+        validate_ownership(names, marker)
+        if marker is None:
+            self.coll_mgr.create_collection(self.scope_name, MARKER_COLLECTION)
+            metadata.insert(MARKER_KEY, MARKER)
+
+    def experiment_metadata(self):
+        server_version = list(self.cluster.query("SELECT RAW VERSION()"))[0]
+        indexes = list(self.cluster.query(
+            "SELECT i.* FROM system:indexes AS i "
+            "WHERE i.bucket_id = $bucket AND i.scope_id = $scope",
+            QueryOptions(named_parameters={"bucket": self.bucket_name, "scope": self.scope_name}),
+        ))
+        return {
+            "server_version": server_version,
+            "bucket": self.bucket_name,
+            "scope": self.scope_name,
+            "indexes": indexes,
+        }
 
     def drop_collections(self):
         for name in ("users", "tours", "bookings", "reviews"):

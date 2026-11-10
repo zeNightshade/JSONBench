@@ -56,7 +56,7 @@ code that produced the historical logs.
 - [x] Generate a canonical dataset independently of database loading; load identical documents into both systems.
 - [x] Save dataset checksums, sizes, generator configuration, and scale factor.
 - [x] Validate the complete manifest, file sizes/counts, JSON records and unique document IDs before connecting or replacing collections.
-- [ ] Record code revision, dependency/database versions, native queries, and index definitions.
+- [x] Record code revision, dependency/server versions, native queries, and actual index definitions.
 - [ ] Record database settings, seeds, query probabilities, timeout policy, and actual run duration.
 - [x] Record attempt identity, worker identity, and start/finish offsets.
 - [x] Persist observations incrementally and use unique run IDs.
@@ -67,7 +67,7 @@ code that produced the historical logs.
 - [x] Make connection settings configurable; configuration parsing must not connect.
 - [x] Separate domain-specific document creation from database connectors.
 - [x] Make replacement of collections explicit.
-- [ ] Validate destination ownership before destructive loading; currently requires a dedicated destination configured by the operator.
+- [x] Require a valid ownership marker before replacement; only an empty destination can be claimed automatically.
 - [x] Close connections at pipeline exit and watch Couchbase secondary indexes after creation.
 - [ ] Validate full loading/connection lifecycle against running servers, including newly created collection visibility to Couchbase Query.
 - [x] Exercise both JSONBench query connectors against running servers for all eight fixture queries.

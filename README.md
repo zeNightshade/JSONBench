@@ -147,7 +147,15 @@ or scope. Generate once, then load that artifact separately into each backend.
 Before connecting, the loader validates the manifest version, all four collections,
 checksums, byte sizes, record counts, valid JSON and unique nonempty string IDs
 (up to 250 UTF-8 bytes). Keep dataset files unchanged during loading. This preflight
-does not verify destination ownership or make database replacement transactional.
+does not make database replacement transactional.
+
+The loader claims an empty database/scope by writing an ownership document in
+`jsonbench_metadata`. Subsequent replacement requires that exact marker. Any
+nonempty unmarked destination is refused, including older JSONBench datasets;
+choose a fresh dedicated database/scope instead. Only the four benchmark collections
+are replaced; the marker is retained. Use one loader at a time and restrict other
+writers: this marker prevents accidental replacement, not malicious access or
+concurrent changes. Couchbase scopes must already exist and be empty on first use.
 
 ```sh
 python -m jsonbench --load

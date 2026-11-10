@@ -209,6 +209,7 @@ def load_dataset(config):
             "Loading requires explicit replace_collections=true for benchmark-owned collections"
         )
     database = config.get_database()
+    database.ensure_ownership()
     database.drop_collections()
     database.create_collections()
     for collection in manifest["collections"]:

@@ -146,6 +146,7 @@ def main(config, queries, *, run_path=None, on_start=None):
         "queries": queries,
         "backend": config.get_database_type(),
     }
+    info["database_metadata"] = database.experiment_metadata()
     info["python_version"] = platform.python_version()
     info["dependencies"] = {}
     for package in ("pymongo", "couchbase", "Faker"):

@@ -73,7 +73,7 @@ def execute_with_fake_database(settings, queries, path, channel):
         time.sleep(0.002)
         return {"status": "success", "time": 0.002, "row_count": 1, "error": None}
 
-    database = SimpleNamespace(query=query, close=lambda: None)
+    database = SimpleNamespace(query=query, close=lambda: None, experiment_metadata=lambda: {})
     ConfigLoader.get_database = lambda self: database
     supervisor._execute(settings, queries, path, channel)
 

@@ -87,6 +87,10 @@ def test_generated_pipeline(tmp_path):
                 db.coll_mgr.create_scope(namespace)
                 created_scope = True
             assert load_dataset(config) == manifest
+            db.ensure_ownership()  # Existing valid marker permits future replacement.
+            metadata = db.experiment_metadata()
+            assert metadata["server_version"]
+            assert metadata["indexes"]
             queries[backend] = generate_queries(config)
 
         with (

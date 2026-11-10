@@ -2,6 +2,7 @@ from pymongo import MongoClient, timeout
 from pymongo.errors import PyMongoError
 
 from .outcome import consume
+from .ownership import MARKER, MARKER_COLLECTION, MARKER_KEY, validate_ownership
 
 
 class MongoDB:
@@ -16,6 +17,25 @@ class MongoDB:
         self.tours = self.database.get_collection("tours")
         self.bookings = self.database.get_collection("bookings")
         self.reviews = self.database.get_collection("reviews")
+
+    def ensure_ownership(self):
+        names = set(self.database.list_collection_names())
+        metadata = self.database[MARKER_COLLECTION]
+        record = metadata.find_one({"_id": MARKER_KEY}) if MARKER_COLLECTION in names else None
+        marker = {k: v for k, v in record.items() if k != "_id"} if record else None
+        validate_ownership(names, marker)
+        if marker is None:
+            metadata.insert_one({"_id": MARKER_KEY, **MARKER})
+
+    def experiment_metadata(self):
+        return {
+            "server_version": self.client.server_info()["version"],
+            "database": self.database.name,
+            "indexes": {
+                name: list(self.database[name].list_indexes())
+                for name in ("users", "tours", "bookings", "reviews")
+            },
+        }
 
     def drop_collections(self):
         self.users.drop()

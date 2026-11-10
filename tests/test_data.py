@@ -96,8 +96,9 @@ def test_validated_dataset_loads_all_records(tmp_path):
         get_create_indexes=lambda: True,
     )
     assert load_dataset(config) == manifest
-    assert database.method_calls[0][0] == "drop_collections"
-    assert database.method_calls[1][0] == "create_collections"
+    assert database.method_calls[0][0] == "ensure_ownership"
+    assert database.method_calls[1][0] == "drop_collections"
+    assert database.method_calls[2][0] == "create_collections"
     assert database.method_calls[-1][0] == "create_indexes"
     assert {
         call.args[0]: len(call.args[1]) for call in database.load_documents.call_args_list

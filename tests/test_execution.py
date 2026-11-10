@@ -67,7 +67,7 @@ def test_worker_stops_admissions_but_records_late_finish():
         return {"status": "success", "time": 4, "row_count": 1, "error": None}
 
     worker_loop(
-        SimpleNamespace(query=query),
+        SimpleNamespace(query=query, experiment_metadata=lambda: {}),
         [{"name": "Q1", "primary_collection": "x", "query": []}],
         [1],
         worker=0,
@@ -143,7 +143,7 @@ def test_couchbase_connector_preserves_database_timeout():
     def query(*args):
         raise UnAmbiguousTimeoutException("test timeout")
 
-    connector.cb_scope = SimpleNamespace(query=query)
+    connector.cb_scope = SimpleNamespace(query=query, experiment_metadata=lambda: {})
     result = connector.query("x", "SELECT 1", timeout_seconds=1)
     assert result["status"] == "timeout"
     assert result["time"] >= 0
@@ -176,7 +176,7 @@ def test_runner_persists_shared_timeline_and_unique_runs(tmp_path):
         time.sleep(0.002)
         return {"status": "success", "time": 0.002, "row_count": 1, "error": None}
 
-    config.database = SimpleNamespace(query=query)
+    config.database = SimpleNamespace(query=query, experiment_metadata=lambda: {})
     queries = [{"name": "Q1", "primary_collection": "x", "query": []}]
     first = main(config, queries)
     second = main(config, queries)
@@ -213,7 +213,7 @@ def test_runner_failure_keeps_started_event_and_marks_aborted(tmp_path):
     def query(*args, **kwargs):
         raise TypeError("programming defect")
 
-    config.database = SimpleNamespace(query=query)
+    config.database = SimpleNamespace(query=query, experiment_metadata=lambda: {})
     with pytest.raises(TypeError):
         main(config, [{"name": "Q1", "primary_collection": "x", "query": []}])
     run = next((tmp_path / "results/mongodb").iterdir())
