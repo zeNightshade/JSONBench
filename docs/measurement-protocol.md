@@ -88,3 +88,19 @@ worker origin. Its report is saved as `loaded_dataset_verification`; mismatches
 abort the run. This pre-scan warms caches and uses the startup watchdog budget.
 The report records Q4 visit selectivity without modifying its fixed predicate.
 Keep data immutable: verification does not prevent subsequent writes.
+
+## Full paper execution target
+
+The author supplied the following paper environment: Amazon EC2 `m6a.xlarge`,
+AMD EPYC 7R13 (2.6 GHz), 16 GB RAM, Red Hat Enterprise Linux 9.6,
+a 128 GB EBS system volume, and a separate 250 GB EBS database-storage volume.
+Full publication experiments must run on EC2; local runs are functional pilots,
+not paper performance results. Before provisioning, specify EBS volume type,
+provisioned IOPS/throughput, filesystem/mount settings, and database resource
+settings. Confirm whether backend runs use one instance sequentially or identically
+configured separate instances, and record the chosen arrangement.
+
+Dates in the current dataset are ISO date-only strings (`YYYY-MM-DD`) in both
+MongoDB and Couchbase. The loader does not convert them to BSON dates. None of the
+eight workload queries operates on dates. A future date-query workload will need
+an explicit shared contract for parsing, timezone, precision and date arithmetic.

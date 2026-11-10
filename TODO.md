@@ -76,6 +76,7 @@ code that produced the historical logs.
 ## P2 — Repeated experiments and publication analysis
 
 - [ ] Define independent repetitions, seeds, run order, and cache policy.
+- [ ] Run publication experiments on the specified EC2 m6a.xlarge/RHEL 9.6 environment; pin EBS and database resource settings (see measurement protocol).
 - [ ] Generate figures from a recorded run manifest rather than manually selected directory names.
 - [ ] Report failure rates, sample counts, latency distributions, and uncertainty across repetitions.
 - [ ] Do not compare successful-only averages when the successful query mixes differ.

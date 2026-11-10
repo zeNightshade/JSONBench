@@ -122,3 +122,28 @@ JSONBENCH_CB_DEPLOYMENT=jsonbench-paper-cb \
 uv run --with ~/code/bondi --with-requirements requirements-dev.txt \
   python -m pytest tests/test_live_equivalence.py tests/test_live_pipeline.py -q
 ```
+
+## Representative-scale local pilot (SF=10)
+
+On 2026-11-10, the matching paper-version deployments loaded and verified 87,000
+identical generated documents (10,000 users, 2,000 tours, 50,000 bookings and
+25,000 reviews; seed 42). The unchanged eight queries each completed successfully
+on both systems with matching row counts. Row counts alone do not establish full
+result equivalence at this scale; that was checked separately on the small fixtures.
+Q4 returned zero rows for its existing location literal.
+
+Each backend then ran two clients with 10 seconds of warm-up and 30 seconds of
+measurement, 60-second query deadlines, and a 90-second drain allowance. All
+197 MongoDB and 24 Couchbase completed attempts succeeded, with no timeouts/errors.
+The short random Couchbase run did not select Q8, so a separate targeted check
+submitted two simultaneous Q8 queries: both returned 56,910 rows successfully in
+about 38.5 seconds. Their finishes were drained beyond a one-second admission
+window; that check is not a throughput measurement.
+
+Artifacts and the pilot scripts are retained locally in `analysis/pilot-s10-01/`,
+including `report.json`, `resources.json`, dataset, generated queries and event logs.
+MongoDB had a 1 GiB container cap / 0.25 GiB cache; Couchbase had a 4 GiB cap.
+Other databases were running on the host. Full data verification pre-scanned the
+collections. These conditions differ from the target EC2 setup, so these timings
+must not be used as paper performance results. The pilot does not reproduce or
+explain the original missing Couchbase timings.
