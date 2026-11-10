@@ -216,4 +216,6 @@ Python 3.11+ is required. No database is needed for the unit tests or legacy ana
 See [measurement protocol](docs/measurement-protocol.md) and
 [template semantics](docs/query-templates.md) for the repaired runner and compiler.
 Live correctness validation and the remaining TODO items are still required before
-publication reruns. These code fixes have not been validated against running servers.
+publication reruns. The eight core queries and both query connectors pass the opt-in
+[BONDI live fixture checks](docs/live-validation.md) on MongoDB 8.0.16 and Couchbase
+Community 7.6.2. Generated-data equivalence and the paper versions remain pending.

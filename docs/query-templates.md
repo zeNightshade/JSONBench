@@ -48,5 +48,6 @@ Q3 averages booking array sizes directly; it does not unnest travellers. Update 
 paper's operator table accordingly.
 
 Unit tests check the compiler subset, alias resolution, immutability, escaping, and
-all eight templates. They are not evidence of cross-system result equivalence. Small
-independent expected-answer fixtures and live validation remain required.
+all eight templates. They are not evidence of cross-system result equivalence. The eight benchmark queries also pass independent expected-answer
+[live fixture checks](live-validation.md). Generated-data validation and edge cases
+outside the documented subset remain required.

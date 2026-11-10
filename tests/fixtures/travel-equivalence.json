@@ -1,0 +1,195 @@
+{
+  "documents": {
+    "users": [],
+    "tours": [
+      {
+        "_id": "t1",
+        "difficulty": "easy",
+        "destination": "D",
+        "itinerary": [
+          {
+            "location": "Donnafurt"
+          },
+          {
+            "location": "Donnafurt"
+          },
+          {
+            "location": "Elsewhere"
+          }
+        ],
+        "name": "O'Brien \"special\" \\ path"
+      },
+      {
+        "_id": "t2",
+        "difficulty": "hard",
+        "destination": "D",
+        "itinerary": [
+          {
+            "location": "Donnafurt"
+          }
+        ],
+        "name": "Beta"
+      },
+      {
+        "_id": "t3",
+        "difficulty": "easy",
+        "destination": "E",
+        "itinerary": [],
+        "name": "Alpha"
+      }
+    ],
+    "bookings": [
+      {
+        "_id": "b1",
+        "tour_id": "t1",
+        "total_price": 100,
+        "travellers": [
+          {
+            "age": 20,
+            "nationality": "AU"
+          }
+        ]
+      },
+      {
+        "_id": "b2",
+        "tour_id": "t1",
+        "total_price": 300,
+        "travellers": [
+          {
+            "age": 40,
+            "nationality": "AU"
+          },
+          {
+            "age": 60,
+            "nationality": "DE"
+          },
+          {
+            "age": 80,
+            "nationality": "DE"
+          }
+        ]
+      },
+      {
+        "_id": "b3",
+        "tour_id": "t2",
+        "total_price": 200,
+        "travellers": [
+          {
+            "age": 30,
+            "nationality": "AU"
+          }
+        ]
+      },
+      {
+        "_id": "b4",
+        "tour_id": "t2",
+        "total_price": 50,
+        "travellers": []
+      }
+    ],
+    "reviews": [
+      {
+        "_id": "r1",
+        "tour_id": "t1",
+        "booking_id": "b1",
+        "rating": 1
+      },
+      {
+        "_id": "r2",
+        "tour_id": "t1",
+        "booking_id": "b2",
+        "rating": 5
+      },
+      {
+        "_id": "r3",
+        "tour_id": "t2",
+        "booking_id": "b3",
+        "rating": 5
+      }
+    ]
+  },
+  "expected": {
+    "Query 1": [
+      {
+        "tour_id": "t1",
+        "total_revenue": 400
+      },
+      {
+        "tour_id": "t2",
+        "total_revenue": 250
+      }
+    ],
+    "Query 2": [
+      {
+        "tour_id": "t1",
+        "avg_age": 50,
+        "min_age": 20,
+        "max_age": 80
+      },
+      {
+        "tour_id": "t2",
+        "avg_age": 30,
+        "min_age": 30,
+        "max_age": 30
+      }
+    ],
+    "Query 3": [
+      {
+        "tour_id": "t1",
+        "avg_grp_size": 2
+      },
+      {
+        "tour_id": "t2",
+        "avg_grp_size": 0.5
+      }
+    ],
+    "Query 4": [
+      {
+        "difficulty": "easy",
+        "num_of_tours": 2
+      },
+      {
+        "difficulty": "hard",
+        "num_of_tours": 1
+      }
+    ],
+    "Query 5": [
+      {
+        "_id": "t1",
+        "avg_rating": 3
+      },
+      {
+        "_id": "t2",
+        "avg_rating": 5
+      }
+    ],
+    "Query 6": [
+      {
+        "tours_destination": "D",
+        "avg_age": 46
+      }
+    ],
+    "Query 7": [
+      {
+        "itinerary_location": "Donnafurt",
+        "total_travellers": 9
+      },
+      {
+        "itinerary_location": "Elsewhere",
+        "total_travellers": 4
+      }
+    ],
+    "Query 8": [
+      {
+        "destination": "D",
+        "bookings_travellers_nationality": "AU",
+        "avg_rating": 3.4
+      },
+      {
+        "destination": "D",
+        "bookings_travellers_nationality": "DE",
+        "avg_rating": 3
+      }
+    ]
+  }
+}

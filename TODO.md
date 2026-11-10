@@ -41,7 +41,8 @@ code that produced the historical logs.
 - [x] Reject unsupported expressions and null/missing predicates rather than silently compiling them.
 - [ ] Define and validate a shared null/missing predicate contract.
 - [ ] Define joins, duplicate handling, empty arrays, grouping, ordering, and result comparison semantics.
-- [ ] Validate all eight queries against independently calculated expected answers on small fixtures.
+- [x] Validate all eight queries against independently calculated expected answers on small fixtures (MongoDB 8.0.16 and Couchbase Community 7.6.2, via BONDI).
+- [ ] Repeat live validation on the versions selected for the paper (originally MongoDB 8.2.1 / Couchbase 8.0.0).
 - [ ] Validate corresponding MongoDB and Couchbase results on generated data.
 - [ ] Clarify Q8's intended rating weighting.
 - [ ] Clarify Q4 visits versus distinct tours and validate its filter selectivity.
@@ -66,7 +67,8 @@ code that produced the historical logs.
 - [x] Make replacement of collections explicit.
 - [ ] Validate destination ownership before destructive loading; currently requires a dedicated destination configured by the operator.
 - [x] Close connections at pipeline exit and watch Couchbase secondary indexes after creation.
-- [ ] Validate connection lifecycle and index availability against running servers.
+- [ ] Validate full loading/connection lifecycle against running servers, including newly created collection visibility to Couchbase Query.
+- [x] Exercise both JSONBench query connectors against running servers for all eight fixture queries.
 
 ## P2 — Repeated experiments and publication analysis
 
