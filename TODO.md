@@ -42,7 +42,7 @@ code that produced the historical logs.
 - [ ] Define and validate a shared null/missing predicate contract.
 - [ ] Define joins, duplicate handling, empty arrays, grouping, ordering, and result comparison semantics.
 - [x] Validate all eight queries against independently calculated expected answers on small fixtures (MongoDB 8.0.16 and Couchbase Community 7.6.2, via BONDI).
-- [ ] Repeat live validation on the versions selected for the paper (originally MongoDB 8.2.1 / Couchbase 8.0.0).
+- [x] Repeat small fixture/generated-data live validation on MongoDB 8.2.1 / Couchbase Community 8.0.0; confirm paper edition and run a representative-scale pilot separately.
 - [x] Validate corresponding MongoDB and Couchbase results on a small generated dataset (SF=0.05); verify loaded documents and short concurrent-run metrics.
 - [x] Preserve Q8's traveller-weighted tour-review average; update its description rather than changing joins.
 - [x] Preserve Q4 itinerary-visit counting and Q1/Q7 semantics; update descriptions without changing operations.

@@ -91,3 +91,33 @@ uv run --project ~/code/bondi bondi stop jsonbench-live-cb
 ```
 
 Use `bondi start NAME` to reuse them. Do not remove unrelated deployments.
+
+## Paper-version validation (2026-11-10)
+
+BONDI 0.1.9 deployed separate MongoDB 8.2.1 and Couchbase Community 8.0.0
+instances, named `jsonbench-paper-mongo` and `jsonbench-paper-cb`. MongoDB uses
+port 27030, a 1024 MiB container cap and 0.25 GiB WiredTiger cache. Couchbase
+uses ports 9691/9693/11220, bucket `jsonbench_paper`, and a 4096 MiB container
+cap. These are local correctness settings, not a reproduction of paper hardware.
+The paper's Couchbase edition still needs confirmation.
+
+All 18 fixture checks passed. The generated SF=0.05 test also passed on these
+versions: 435 documents verified, all eight query results equivalent, and 2,964
+MongoDB / 122 Couchbase attempts with no errors or timeouts. Two clients ran for
+one second of warm-up and three seconds of measurement per backend. The original
+Q4 predicate matched nothing; a separate extra fixture query exercised a present
+location. Production query semantics remain unchanged. These short runs do not
+support performance comparisons or establish behaviour at paper scale.
+
+The retained local report is `analysis/paper-versions-smoke-02/report.json`.
+The earlier `smoke-01` generated run used the old deployments because that test
+hard-coded their names; the test now honours both deployment environment variables
+and includes observed server versions in its report.
+
+```sh
+JSONBENCH_LIVE=1 \
+JSONBENCH_MONGO_DEPLOYMENT=jsonbench-paper-mongo \
+JSONBENCH_CB_DEPLOYMENT=jsonbench-paper-cb \
+uv run --with ~/code/bondi --with-requirements requirements-dev.txt \
+  python -m pytest tests/test_live_equivalence.py tests/test_live_pipeline.py -q
+```

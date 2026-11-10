@@ -40,8 +40,8 @@ def test_generated_pipeline(tmp_path):
     templates.append(nonempty)
     query_path = output / "queries.json"
     query_path.write_text(json.dumps(templates, indent=2))
-    m = get_deployment("jsonbench-live-mongo")
-    c = get_deployment("jsonbench-live-cb")
+    m = get_deployment(os.environ.get("JSONBENCH_MONGO_DEPLOYMENT", "jsonbench-live-mongo"))
+    c = get_deployment(os.environ.get("JSONBENCH_CB_DEPLOYMENT", "jsonbench-live-cb"))
     namespace = "jsonbench_smoke_" + uuid4().hex[:12]
     configs = {}
     queries = {}
@@ -177,6 +177,7 @@ def test_generated_pipeline(tmp_path):
             assert summary["measurement_timeouts"] == summary["measurement_errors"] == 0
             report["runs"][backend] = {
                 "run_id": run.name,
+                "server_version": info["database_metadata"]["server_version"],
                 "attempts": len(completed),
                 "summary": summary,
             }
