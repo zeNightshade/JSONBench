@@ -156,13 +156,10 @@ Results are written to the configured output directory for further analysis.
 
 ## Evaluation
 
-The benchmark was evaluated using MongoDB and Couchbase under varying dataset sizes and levels of concurrency. Experimental results demonstrate the benchmark's capability of effectively evaluating the scalability of JSON document stores and identifying their differences under heavy workloads. Queries involving nested JSON structures, unnesting operations, and multi-collection joins expose distinct performance characteristics between database implementations, highlighting the benchmark's suitability for comparing document stores across a range of analytical workloads.
-
-![](img/latency-scalefactor.png)
-
-![](img/throughput-clients.png)
-
-![](img/query-time.png)
+The historical MongoDB/Couchbase evaluation is under correctness review. Its
+published latency, throughput, and pooled per-query plots must not be used as
+validated comparisons. See the revised `visualisation.ipynb` for diagnostic
+analysis and [TODO.md](TODO.md) for remaining work before rerunning experiments.
 
 ---
 
@@ -179,3 +176,26 @@ The benchmark was evaluated using MongoDB and Couchbase under varying dataset si
 - Matplotlib
 
 ---
+
+## Correctness work and legacy result analysis
+
+See [TODO.md](TODO.md) for the prioritised repair plan. The original latency and
+throughput plots are not reliable performance comparisons. The revised
+`visualisation.ipynb` reports numeric query durations and missing-timing rates;
+it intentionally does not estimate throughput from these legacy logs.
+
+Place the supplied logs under `jsonbench/results/`, then launch the notebook from
+the repository root. `legacy-runs.json` records the historical run selection.
+The logs do not contain measurement boundaries, error details, or query results,
+so reanalysis cannot establish exact throughput or query equivalence.
+
+Run the offline analysis tests with:
+
+```sh
+uv run --with pytest python -m pytest tests
+uv run --with ruff ruff check jsonbench/analysis.py tests
+```
+
+The notebook additionally requires pandas and matplotlib. No database is needed
+for these tests or for reanalysing existing logs. Execution and translation fixes
+remain pending; do not use the existing runner for publication reruns yet.
