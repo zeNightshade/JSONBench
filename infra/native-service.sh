@@ -23,8 +23,11 @@ for attempt in $(seq 1 120); do
  if [[ $backend == mongodb ]]; then
   if mongosh --quiet --eval 'quit(db.adminCommand({ping:1}).ok === 1 ? 0 : 1)' >/dev/null 2>&1; then exit 0; fi
  else
-  if curl --fail --silent http://127.0.0.1:8091/pools >/dev/null; then
-   if curl --silent --output /dev/null http://127.0.0.1:8093/admin/ping; then exit 0; fi
+  # Initialized clusters require auth: HTTP401 confirms the HTTP service is up.
+  # The matrix performs authenticated SDK/version checks before loading data.
+  code=$(curl --max-time 5 --silent --output /dev/null --write-out "%{http_code}" http://127.0.0.1:8091/pools || true)
+  if [[ $code == 200 || $code == 401 ]]; then
+   if curl --max-time 5 --silent --output /dev/null http://127.0.0.1:8093/admin/ping; then exit 0; fi
   fi
  fi
  sleep 2
