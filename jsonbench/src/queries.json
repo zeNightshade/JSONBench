@@ -1,7 +1,7 @@
 [
     {
         "name": "Query 1",
-        "description": "Total revenue for each tour",
+        "description": "Total booking value per tour",
         "primary_collection": "bookings",
         "operations": {
             "group": {
@@ -48,7 +48,7 @@
     },
     {
         "name": "Query 4",
-        "description": "Number of tours per difficulty level that visited a specific location",
+        "description": "Number of itinerary visits to a specified location, grouped by tour difficulty",
         "primary_collection": "tours",
         "operations": {
             "unnest": ["itinerary"],
@@ -105,7 +105,7 @@
     },
     {
         "name": "Query 7",
-        "description": "Total number of travellers for each location visited by a tour",
+        "description": "Total traveller-visits per itinerary location",
         "primary_collection": "tours",
         "operations": {
             "join": {
@@ -129,7 +129,7 @@
     },
     {
         "name": "Query 8",
-        "description": "Average rating for each destination by nationality",
+        "description": "Traveller-weighted average tour-review rating per destination and nationality",
         "primary_collection": "tours",
         "operations": {
             "join": [

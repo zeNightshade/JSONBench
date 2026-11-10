@@ -52,9 +52,9 @@ Couchbase uses request-plus consistency for expected-answer checks and primary i
 for scan access. These indexes are a correctness-fixture setup, not a benchmark
 index recommendation. Creation waits for Query-service visibility and index readiness.
 
-The fixture pins existing Q4/Q8 semantics, not an endorsement of their intended
-business meaning. Q4 counts itinerary visits; Q8 joins all reviews to all travellers
-within a tour. Those research decisions remain open.
+The fixture pins the retained Q4/Q8 semantics. Q4 counts itinerary visits; Q8 joins
+all reviews to all travellers within a tour. The workload descriptions now reflect
+these operations; see [query semantics](query-templates.md).
 
 ## Observed validation
 

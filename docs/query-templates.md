@@ -31,23 +31,30 @@ multiplicity. Unnest aliases are resolved by exact path prefixes, not character
 stripping. The current benchmark assumes existing, correctly typed arrays, and
 non-null scalar join keys. Missing/scalar array behaviour is not claimed equivalent.
 
-## Open semantic decisions
+## Preserved benchmark semantics
 
-Q8 currently joins all bookings and all reviews for a tour, then expands travellers.
-This preserves the original template, including its cross-product weighting. It is
-not necessarily the intended meaning of a destination rating by traveller nationality.
-An alternative is to associate each review with its own booking via booking_id.
-Resolve the research question before changing that query.
+We retain the existing operations and describe what they compute. The goal is to
+generate equivalent queries for both systems, rather than redesign the workload.
 
-Q4 counts matching unnested itinerary entries. Repeated visits to the same location
-can count a tour more than once. Decide whether the intended metric is visits or
-distinct tours. Its fixed location literal may also produce zero matches on generated
-data; parameter selection/selectivity must be validated before benchmarking.
+- Q1: Total booking value per tour (including unpaid bookings).
+- Q4: Number of itinerary visits to a specified location, grouped by tour difficulty.
+- Q7: Total traveller-visits per itinerary location.
+- Q8: Traveller-weighted average tour-review rating per destination and nationality.
+
+Q4 counts repeated itinerary visits separately. Q7 similarly counts travellers again
+for repeated visits. Q8 joins all bookings and all reviews for a tour, then expands
+travellers: each review contributes once per traveller of the given nationality.
+Nationality belongs to the traveller, not necessarily the reviewer. No distinct-tour
+counting or review-to-booking association is introduced. Existing result aliases are
+retained for compatibility.
+
+Q4's fixed location literal may produce zero matches on generated data; parameter
+selection/selectivity still needs validation before benchmarking.
 
 Q3 averages booking array sizes directly; it does not unnest travellers. Update the
 paper's operator table accordingly.
 
 Unit tests check the compiler subset, alias resolution, immutability, escaping, and
 all eight templates. They are not evidence of cross-system result equivalence. The eight benchmark queries also pass independent expected-answer
-[live fixture checks](live-validation.md). Generated-data validation and edge cases
-outside the documented subset remain required.
+[live fixture checks](live-validation.md). Small generated-data checks also pass; edge cases outside the documented subset
+remain unvalidated.

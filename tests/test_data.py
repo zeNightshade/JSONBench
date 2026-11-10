@@ -45,3 +45,60 @@ def test_loading_requires_explicit_replacement(tmp_path):
     config = SimpleNamespace(settings={"dataset_directory": str(tmp_path / "a")})
     with pytest.raises(ValueError, match="replace_collections"):
         load_dataset(config)
+
+
+@pytest.mark.parametrize("defect", ["missing", "version", "count", "bytes", "duplicate", "json", "id", "nan"])
+def test_invalid_artifacts_never_connect(tmp_path, defect):
+    import hashlib
+
+    path = tmp_path / "dataset"
+    manifest = generate_dataset(path, scale=0.01, seed=0, reference_date="2025-11-01")
+    file = path / "users.jsonl"
+    if defect == "missing":
+        del manifest["collections"]["reviews"]
+    elif defect == "version":
+        manifest["format_version"] = 2
+    elif defect in {"count", "bytes"}:
+        manifest["collections"]["users"][defect] += 1
+    else:
+        lines = file.read_text().splitlines()
+        lines[1] = {
+            "duplicate": lines[0],
+            "json": "{broken",
+            "id": '{"_id": 42}',
+            "nan": '{"_id": "new", "value": NaN}',
+        }[defect]
+        file.write_text("\n".join(lines) + "\n")
+        manifest["collections"]["users"].update(
+            bytes=file.stat().st_size, sha256=hashlib.sha256(file.read_bytes()).hexdigest()
+        )
+    (path / "manifest.json").write_text(json.dumps(manifest))
+
+    def forbidden_connection():
+        pytest.fail("Invalid dataset opened a database connection")
+
+    config = SimpleNamespace(
+        settings={"dataset_directory": str(path), "replace_collections": True},
+        get_database=forbidden_connection,
+    )
+    with pytest.raises(ValueError):
+        load_dataset(config)
+
+
+def test_validated_dataset_loads_all_records(tmp_path):
+    from unittest.mock import Mock
+
+    manifest = generate_dataset(tmp_path / "data", scale=0.01, seed=0, reference_date="2025-11-01")
+    database = Mock()
+    config = SimpleNamespace(
+        settings={"dataset_directory": str(tmp_path / "data"), "replace_collections": True},
+        get_database=lambda: database,
+        get_create_indexes=lambda: True,
+    )
+    assert load_dataset(config) == manifest
+    assert database.method_calls[0][0] == "drop_collections"
+    assert database.method_calls[1][0] == "create_collections"
+    assert database.method_calls[-1][0] == "create_indexes"
+    assert {
+        call.args[0]: len(call.args[1]) for call in database.load_documents.call_args_list
+    } == {name: metadata["count"] for name, metadata in manifest["collections"].items()}

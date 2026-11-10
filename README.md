@@ -144,6 +144,10 @@ keys are `uri` and `database`; Couchbase keys are `uri`, `username`, `password`,
 `bucket`, and `scope`. Loading replaces the four benchmark collections and therefore
 requires `replace_collections: true` explicitly. Use a dedicated benchmark database
 or scope. Generate once, then load that artifact separately into each backend.
+Before connecting, the loader validates the manifest version, all four collections,
+checksums, byte sizes, record counts, valid JSON and unique nonempty string IDs
+(up to 250 UTF-8 bytes). Keep dataset files unchanged during loading. This preflight
+does not verify destination ownership or make database replacement transactional.
 
 ```sh
 python -m jsonbench --load

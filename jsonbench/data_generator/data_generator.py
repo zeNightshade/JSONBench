@@ -148,16 +148,62 @@ def generate_dataset(path, *, scale, seed, reference_date):
     return manifest
 
 
+def validate_dataset(path):
+    """Preflight the entire artifact before any destructive database operation."""
+    path = Path(path)
+    manifest = json.loads((path / "manifest.json").read_text())
+    if not isinstance(manifest, dict) or type(manifest.get("format_version")) is not int:
+        raise ValueError("Invalid dataset manifest")
+    if manifest["format_version"] != 1:
+        raise ValueError("Unsupported dataset format version")
+    collections = manifest.get("collections")
+    if not isinstance(collections, dict) or set(collections) != {
+        "users", "tours", "bookings", "reviews"
+    }:
+        raise ValueError("Dataset must contain exactly the four benchmark collections")
+
+    for collection, metadata in collections.items():
+        if not isinstance(metadata, dict) or any(
+            type(metadata.get(key)) is not int or metadata[key] < 0
+            for key in ("count", "bytes")
+        ):
+            raise ValueError(f"Invalid dataset metadata: {collection}")
+        file_path = path / f"{collection}.jsonl"
+        with file_path.open("rb") as file:
+            if hashlib.file_digest(file, "sha256").hexdigest() != metadata.get("sha256"):
+                raise ValueError(f"Dataset checksum mismatch: {collection}")
+        if file_path.stat().st_size != metadata["bytes"]:
+            raise ValueError(f"Dataset byte size mismatch: {collection}")
+
+        # Duplicate IDs would be overwritten by Couchbase but rejected by MongoDB.
+        identities = set()
+        count = 0
+        with file_path.open() as file:
+            for count, line in enumerate(file, 1):
+                try:
+                    record = json.loads(line, parse_constant=_reject_json_constant)
+                except ValueError as exc:
+                    raise ValueError(f"Invalid JSON in {collection}, line {count}") from exc
+                if not isinstance(record, dict) or not isinstance(record.get("_id"), str):
+                    raise ValueError(f"Document requires a string _id: {collection}, line {count}")
+                identity = record["_id"]
+                if not identity or len(identity.encode("utf-8")) > 250:
+                    raise ValueError(f"Document _id exceeds shared key contract: {collection}")
+                if identity in identities:
+                    raise ValueError(f"Duplicate document _id: {collection}, line {count}")
+                identities.add(identity)
+        if count != metadata["count"]:
+            raise ValueError(f"Dataset record count mismatch: {collection}")
+    return manifest
+
+
+def _reject_json_constant(value):
+    raise ValueError(f"Nonfinite JSON value: {value}")
+
+
 def load_dataset(config):
     path = Path(config.settings["dataset_directory"])
-    manifest = json.loads((path / "manifest.json").read_text())
-    # Verify every file before opening a connection or replacing any collection.
-    for collection, metadata in manifest["collections"].items():
-        if collection not in {"users", "tours", "bookings", "reviews"}:
-            raise ValueError("Unexpected dataset collection")
-        with (path / f"{collection}.jsonl").open("rb") as file:
-            if hashlib.file_digest(file, "sha256").hexdigest() != metadata["sha256"]:
-                raise ValueError(f"Dataset checksum mismatch: {collection}")
+    manifest = validate_dataset(path)
     if config.settings.get("replace_collections") is not True:
         raise ValueError(
             "Loading requires explicit replace_collections=true for benchmark-owned collections"
