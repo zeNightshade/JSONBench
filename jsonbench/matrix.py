@@ -140,11 +140,12 @@ def prepare(manifest, root):
     atomic_json(snapshot, fingerprints)
 
 
-def ensure_other_database_stopped(backend):
-    # EC2 runner intentionally supports local, sequential database phases only.
-    port = 8091 if backend == "mongodb" else 27017
+def ensure_other_database_stopped(backend, endpoints=None):
+    other = "couchbase" if backend == "mongodb" else "mongodb"
+    endpoints = endpoints or {"mongodb": ["127.0.0.1", 27017], "couchbase": ["127.0.0.1", 8091]}
+    host, port = endpoints[other]
     try:
-        with socket.create_connection(("127.0.0.1", port), timeout=1):
+        with socket.create_connection((host, port), timeout=1):
             raise RuntimeError(f"Other database appears active on port {port}; stop it first")
     except ConnectionRefusedError:
         pass
@@ -191,7 +192,7 @@ def completed_attempt(attempt):
 
 
 def run(manifest, queries, cells, root, backend, connections, retry_failed=False):
-    ensure_other_database_stopped(backend)
+    ensure_other_database_stopped(backend, manifest.get("database_endpoints"))
     state_path = root / "state.json"
     state = json.loads(state_path.read_text()) if state_path.exists() else {"attempts": {}}
     # Credentials are resolved only in memory; connections are pinned by a digest.
@@ -218,7 +219,7 @@ def run(manifest, queries, cells, root, backend, connections, retry_failed=False
         cooldown_until = state.get("cooldown_until", 0)
         while time.time() < cooldown_until:
             time.sleep(min(10, cooldown_until - time.time()))
-        ensure_other_database_stopped(backend)
+        ensure_other_database_stopped(backend, manifest.get("database_endpoints"))
         config = make_config(manifest, queries, root, cell, connection)
         attempt_dir = root / "attempts" / cell["id"] / f"{len(history) + 1:03d}"
         attempt = {"state": "running", "directory": str(attempt_dir), "started_at": time.time()}

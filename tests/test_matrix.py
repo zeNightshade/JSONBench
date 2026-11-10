@@ -36,7 +36,7 @@ def test_changed_plan_refused(tmp_path):
 def test_resume_skips_complete_preserves_failed_attempt(tmp_path, monkeypatch):
     manifest = {**MANIFEST, "cooldown_seconds": 0}
     cells = matrix.expand(manifest)[:2]
-    monkeypatch.setattr(matrix, "ensure_other_database_stopped", lambda _: None)
+    monkeypatch.setattr(matrix, "ensure_other_database_stopped", lambda *args: None)
     database = SimpleNamespace(server_version=lambda: "8.2.1")
     monkeypatch.setattr(
         matrix,
@@ -96,3 +96,15 @@ def test_active_other_database_refuses_execution(monkeypatch):
     monkeypatch.setattr(matrix.socket, "create_connection", lambda *a, **k: Socket())
     with pytest.raises(RuntimeError, match="Other database"):
         matrix.ensure_other_database_stopped("mongodb")
+
+
+def test_custom_inactive_endpoint_is_checked(monkeypatch):
+    seen = []
+
+    def connect(address, **kwargs):
+        seen.append(address)
+        raise ConnectionRefusedError()
+
+    monkeypatch.setattr(matrix.socket, "create_connection", connect)
+    matrix.ensure_other_database_stopped("mongodb", {"couchbase": ["127.0.0.1", 9791]})
+    assert seen == [("127.0.0.1", 9791)]
