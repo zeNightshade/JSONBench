@@ -15,6 +15,8 @@ class ConfigLoader:
             ("duration", 180, False),
             ("warmup_seconds", 60, True),
             ("query_timeout_seconds", 60, False),
+            ("startup_timeout_seconds", 60, False),
+            ("drain_timeout_seconds", 90, False),
         ]:
             value = self.settings.setdefault(key, default)
             if (

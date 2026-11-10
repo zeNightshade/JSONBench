@@ -1,4 +1,4 @@
-from jsonbench.benchmark import benchmark
+from jsonbench.benchmark.supervisor import run_supervised
 from jsonbench.config_loader import config_loader
 from jsonbench.data_generator import data_generator
 from jsonbench.query_generator import query_generator
@@ -20,6 +20,6 @@ def main(args):
         else:
             # Query generation and benchmarking mode
             queries = query_generator.main(config)
-            benchmark.main(config, queries)
+            run_supervised(config, queries)
     finally:
         config.close()

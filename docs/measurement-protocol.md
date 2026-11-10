@@ -40,8 +40,19 @@ normal summary. Process crashes may leave `state=running`; this is incomplete.
 MongoDB uses PyMongo's client operation deadline across cursor batches. Couchbase
 passes an explicit SDK query timeout and fully consumes the iterator. Native SDK
 cleanup and transport behaviour still determine exact cancellation latency: Python
-threads cannot forcibly terminate a stuck native driver. This is **not** a hard
-process-level watchdog. A strict hard drain bound remains pending.
+threads cannot forcibly terminate a stuck native driver. The CLI therefore spawns
+an isolated benchmark process, with SDK connections created inside it. A parent
+watchdog allows `startup_timeout_seconds` (default 60) until the shared worker
+origin, then warm-up + measurement + `drain_timeout_seconds` (default 90).
+The drain allowance also covers connection cleanup. At expiry the parent terminates
+the child, waits up to one second, then kills it if needed (another one-second join).
+It marks metadata aborted with a reason and removes any normal summary. Flushed
+events remain; a final interrupted JSONL line may be incomplete. This bounds the
+local benchmark process, not server-side cancellation of already submitted queries.
+
+Direct calls to `benchmark.main` remain an in-process testing interface without a
+watchdog; use `run_supervised` or the CLI for experiments. Parent termination or
+machine failure can still leave incomplete metadata.
 
 Default configuration: 60 seconds of warm-up, 180 seconds of measurement, 60-second
 query timeout. Runs can take longer than 240 seconds because of draining.
@@ -61,6 +72,6 @@ Connection credentials are not copied to metadata. Error messages come from the
 native driver and may contain query details; inspect before sharing logs.
 
 Server versions, detailed database settings, verified loaded-dataset receipts,
-index readiness, hard process deadlines, and live correctness checks remain release
+index readiness and validation on the paper database versions remain release
 prerequisites tracked in TODO.md. A local dataset manifest does not prove that dataset
 is currently loaded in the server.

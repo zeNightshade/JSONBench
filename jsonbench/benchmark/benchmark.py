@@ -112,19 +112,19 @@ def summarize_events(events, warmup, duration):
     }
 
 
-def main(config, queries):
+def main(config, queries, *, run_path=None, on_start=None):
     settings = config.settings
     probabilities = config.get_query_sel_prob()
     validate_probabilities(queries, probabilities)
     database = config.get_database()
     warmup, duration = settings["warmup_seconds"], settings["duration"]
     run_id = datetime.now(UTC).strftime("%Y%m%dT%H%M%S") + "-" + uuid4().hex[:12]
-    path = (
+    path = Path(run_path) if run_path is not None else (
         Path(settings.get("results_directory", "jsonbench/results"))
         / config.get_database_type()
         / run_id
     )
-    path.mkdir(parents=True, exist_ok=False)
+    path.mkdir(parents=True, exist_ok=run_path is not None)
     try:
         revision = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
     except (OSError, subprocess.CalledProcessError):
@@ -139,6 +139,8 @@ def main(config, queries):
         "measurement_seconds": duration,
         "seed": settings["seed"],
         "query_timeout_seconds": settings["query_timeout_seconds"],
+        "startup_timeout_seconds": settings.get("startup_timeout_seconds", 60),
+        "drain_timeout_seconds": settings.get("drain_timeout_seconds", 90),
         "scale_factor": config.get_scale_factor(),
         "probabilities": probabilities,
         "queries": queries,
@@ -172,6 +174,8 @@ def main(config, queries):
     def release():
         nonlocal origin
         origin = time.perf_counter()
+        if on_start is not None:
+            on_start(origin)
 
     barrier = threading.Barrier(config.get_workers(), action=release)
     with (path / "events.jsonl").open("w") as file:

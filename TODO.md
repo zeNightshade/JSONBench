@@ -26,7 +26,7 @@ code that produced the historical logs.
 - [x] Define which attempts/completions belong to each metric; save actual phase timestamps.
 - [x] Stop admissions at the deadline; handle late completions separately.
 - [x] Add explicit driver per-query deadlines and document drain behaviour.
-- [ ] Add a hard process-level drain watchdog; native driver cleanup can exceed its requested deadline.
+- [x] Add a CLI process-level startup/drain watchdog, retaining partial events and marking terminated runs aborted; native driver cleanup can exceed its requested deadline.
 - [x] Calculate successful completion throughput from the measured interval, never from all records.
 - [ ] Investigate Couchbase's systematic Q5–Q8 null timings at SF=10 and widespread nulls at larger scales.
 - [x] Test timing boundaries, full cursor consumption, failures, timeouts, and draining with controlled fakes.
