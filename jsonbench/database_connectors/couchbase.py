@@ -72,8 +72,11 @@ class Couchbase:
             self.coll_mgr.create_collection(self.scope_name, MARKER_COLLECTION)
             metadata.insert(MARKER_KEY, MARKER)
 
+    def server_version(self):
+        return list(self.cluster.query("SELECT RAW VERSION()"))[0]
+
     def experiment_metadata(self):
-        server_version = list(self.cluster.query("SELECT RAW VERSION()"))[0]
+        server_version = self.server_version()
         indexes = list(self.cluster.query(
             "SELECT i.* FROM system:indexes AS i "
             "WHERE i.bucket_id = $bucket AND i.scope_id = $scope",

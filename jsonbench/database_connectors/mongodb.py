@@ -27,9 +27,12 @@ class MongoDB:
         if marker is None:
             metadata.insert_one({"_id": MARKER_KEY, **MARKER})
 
+    def server_version(self):
+        return self.client.server_info()["version"]
+
     def experiment_metadata(self):
         return {
-            "server_version": self.client.server_info()["version"],
+            "server_version": self.server_version(),
             "database": self.database.name,
             "indexes": {
                 name: list(self.database[name].list_indexes())

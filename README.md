@@ -256,3 +256,13 @@ larger `startup_timeout_seconds` than its default 60 seconds. Verification is a
 point-in-time check, not a transaction spanning both systems: keep datasets and
 loaded collections immutable during verification and benchmarking. Without a
 configured dataset directory, the runner cannot claim loaded-data verification.
+
+### Full experiment matrix on EC2
+
+See [the EC2 setup and resume guide](docs/ec2-setup.md). The initial manifest is
+`experiments/paper-matrix.json`: 108 runs, three repetitions, one database at a time.
+Preview without database access:
+
+```sh
+python -m jsonbench.matrix plan --output /data/jsonbench-results/paper-v1
+```

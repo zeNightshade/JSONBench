@@ -75,7 +75,8 @@ code that produced the historical logs.
 
 ## P2 — Repeated experiments and publication analysis
 
-- [ ] Define independent repetitions, seeds, run order, and cache policy.
+- [x] Define three execution repetitions, workload seeds, run order, and pre-scan/warm cache policy in the initial paper matrix.
+- [x] Add a sequential resumable runner with immutable plan/dataset fingerprints, output locking and explicit failed-attempt retries.
 - [ ] Run publication experiments on the specified EC2 m6a.xlarge/RHEL 9.6 environment; pin EBS and database resource settings (see measurement protocol).
 - [ ] Generate figures from a recorded run manifest rather than manually selected directory names.
 - [ ] Report failure rates, sample counts, latency distributions, and uncertainty across repetitions.
