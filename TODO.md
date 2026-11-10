@@ -43,7 +43,7 @@ code that produced the historical logs.
 - [ ] Define joins, duplicate handling, empty arrays, grouping, ordering, and result comparison semantics.
 - [x] Validate all eight queries against independently calculated expected answers on small fixtures (MongoDB 8.0.16 and Couchbase Community 7.6.2, via BONDI).
 - [ ] Repeat live validation on the versions selected for the paper (originally MongoDB 8.2.1 / Couchbase 8.0.0).
-- [ ] Validate corresponding MongoDB and Couchbase results on generated data.
+- [x] Validate corresponding MongoDB and Couchbase results on a small generated dataset (SF=0.05); verify loaded documents and short concurrent-run metrics.
 - [ ] Clarify Q8's intended rating weighting.
 - [ ] Clarify Q4 visits versus distinct tours and validate its filter selectivity.
 - [ ] Correct the paper's Q3 operation table: the checked-in template does not unnest travellers.

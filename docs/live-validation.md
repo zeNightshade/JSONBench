@@ -60,8 +60,28 @@ within a tour. Those research decisions remain open.
 
 Validated locally with BONDI 0.1.9, MongoDB 8.0.16, Couchbase Community 7.6.2.
 These differ from the paper's MongoDB 8.2.1 and Couchbase 8.0.0. Repeat validation
-on the intended experiment versions before publication runs. Generated-data checks,
-missing/null and mixed-type semantics, and performance measurements are not covered.
+on the intended experiment versions before publication runs. Missing/null and mixed-type semantics and performance measurements are not covered.
+
+## Generated pipeline smoke test
+
+`tests/test_live_pipeline.py` exercises the production generator, loader, index setup,
+connectors and concurrent runner using a unique test-owned database/scope. It generates
+435 documents at SF=0.05, verifies identical loaded content, compares all eight queries,
+and adds a Q4 instance whose location actually exists. Each backend then runs two
+clients with one second of warm-up and three seconds of measurement. It independently
+checks event pairing, admission boundaries, result counts, failure counts, throughput
+and latency against the saved logs. Set `JSONBENCH_SMOKE_OUTPUT` to a fresh directory
+to retain the dataset, queries, logs and report; otherwise pytest temporary storage is used.
+
+The first observed pass completed 2,978 MongoDB and 115 Couchbase attempts without
+errors/timeouts. These are smoke-test counts, not performance conclusions. The original
+Q4 literal returned no rows; the additional present-location case returned one group.
+Only the configured secondary indexes were created by the production loader.
+
+```sh
+JSONBENCH_LIVE=1 uv run --with ~/code/bondi --with-requirements requirements-dev.txt \
+  python -m pytest tests/test_live_pipeline.py -q
+```
 
 Stop the isolated deployments without deleting them when finished:
 
