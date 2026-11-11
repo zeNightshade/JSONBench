@@ -58,3 +58,28 @@ errors/signals. An OS crash or SIGKILL requires checking service state manually.
 attempts; backend logs and `resources.jsonl` record progress and host/service usage.
 Both services remain disabled for boot startup. The wrapper stops them at completion.
 Capture CPU/kernel/package/storage metadata alongside each run. No Docker is used.
+
+## Larger-host doubled-memory repeat: paper-memory24-v1
+
+The repeat on `13.211.240.180` uses the same pinned benchmark revision
+`3563e6e33da6ffa41c8b98cf9c98d0e07a8b0f73`, database versions and 108-cell
+protocol as `paper-v1`. At the user's request, no pilot was run. Both database
+service caps are 24 GiB with no swap; MongoDB WiredTiger cache is 12 GiB;
+Couchbase Data/bucket quota is 8 GiB and Index quota is 4 GiB. The two databases
+still run sequentially, MongoDB first. Query timeouts remain 60 seconds.
+
+The new results root is `/home/ec2-user/jsonbench-results/paper-memory24-v1`,
+and the systemd unit is `jsonbench-paper-memory24-v1`. The manifest lives in
+that results root as `matrix-manifest.json`, with an absolute query-template path
+into the pinned checkout. No benchmark-source change was required.
+
+The new root's `setup/` directory contains original configuration backups,
+nonsecret experiment metadata, verified Couchbase quota values and SHA256 hashes
+of all 354 files in the original `paper-v1` root. Those hashes were checked again
+after launch. Original result files are preserved; the active benchmark database
+collections are reused and reloaded by the normal runner. Historical database logs
+were already archived in `collected-logs/database-logs.tar.gz`.
+
+Inspect progress with `systemctl status jsonbench-paper-memory24-v1`, the new
+root's `native-status.json`, `state.json`, backend logs and `resources.jsonl`.
+Do not resume against the old `paper-v1` root with these changed memory settings.
