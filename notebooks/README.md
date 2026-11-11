@@ -28,3 +28,8 @@ for measurement-admitted attempts, including drained outcomes, averaged across
 three repetitions. MongoDB occupies the top row and Couchbase the bottom row; columns fix scale factor. Shading is min–max, not a confidence
 interval. OOM marks denote full attempt-interval overlap, not precise measurement
 phase attribution. See the notebook for denominator definitions and limitations.
+
+The Couchbase SF=200 timeline shows 10-second completion-count histograms, with
+client counts as rows and repetitions as columns. It includes measurement-admitted
+queries and their drain outcomes; a query filter allows inspecting individual queries.
+Event and binned-count CSV exports accompany the 200 dpi PNG and vector PDF.
