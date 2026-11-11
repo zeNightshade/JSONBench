@@ -23,8 +23,8 @@ PY
 
 Recommended paper grouping: backend × scale factor × client count, averaging only
 three repetitions. Use the client-count small multiples for the main performance
-figure and failure heatmaps as a companion. The paired100% stacked bars show success, non-timeout error and timeout shares
+figure and failure heatmaps as a companion. The six-panel100% stacked bars show success, non-timeout error and timeout shares
 for measurement-admitted attempts, including drained outcomes, averaged across
-three repetitions. Each client group has MongoDB (M) left and Couchbase (C) right. Shading is min–max, not a confidence
+three repetitions. MongoDB occupies the top row and Couchbase the bottom row; columns fix scale factor. Shading is min–max, not a confidence
 interval. OOM marks denote full attempt-interval overlap, not precise measurement
 phase attribution. See the notebook for denominator definitions and limitations.
