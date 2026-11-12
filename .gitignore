@@ -165,3 +165,14 @@ cython_debug/
 # Local datasets and experiment observations (never commit raw runs)
 /jsonbench/results/
 /datasets/
+
+# Local evaluation results, figures, and diagnostic artifacts
+
+.DS_Store
+
+/analysis/
+
+# Virtual-environment artifacts accidentally created at repository root
+/scripts/
+/share/
+/pyvenv.cfg
