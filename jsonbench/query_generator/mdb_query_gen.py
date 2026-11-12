@@ -1,51 +1,39 @@
-import re
+from .template import expression, normalize
+
 
 class MongoDBQueryGenerator:
-    def parse_expr(self, expr: str):
-        """
-        Parse simple or nested aggregate expressions like:
-        - sum(total_price)
-        - avg(size(travellers))
-        Returns a valid MongoDB aggregation expression.
-        """
-        expr = expr.strip()
-        # Match pattern func(arg)
-        match = re.match(r'(\w+)\((.*)\)', expr)
-        if not match:
-            return f"${expr}"
+    def parse_expr(self, expr):
+        def compile_node(node):
+            op, arg = node
+            if op == "field":
+                return "$" + arg
+            if op == "count":
+                return {"$sum": 1}
+            return {"$" + op: compile_node(arg)}
 
-        func, arg = match.groups()
-        func, arg = func.lower().strip(), arg.strip()
-
-        # Handle nested size() or aggregates recursively
-        if re.match(r'\w+\(.*\)', arg):
-            inner = self.parse_expr(arg)
-        elif arg == "*":
-            inner = 1  # for count(*)
-        else:
-            inner = f"${arg}"
-
-        if func == "count":
-            func = "sum"
-        
-        return {f"${func}": inner}
+        return compile_node(expression(expr))
 
     def generate_query(self, template):
+        template = normalize(template)
         operations = template["operations"]
         pipeline = []
 
         # --- Join (lookup) ---
         if "join" in operations:
-            joins = operations["join"] if isinstance(operations["join"], list) else [operations["join"]]
+            joins = (
+                operations["join"] if isinstance(operations["join"], list) else [operations["join"]]
+            )
             for join in joins:
-                pipeline.append({
-                    "$lookup": {
-                        "from": join["from"],
-                        "localField": join["localField"],
-                        "foreignField": join["foreignField"],
-                        "as": join["from"]
+                pipeline.append(
+                    {
+                        "$lookup": {
+                            "from": join["from"],
+                            "localField": join["localField"],
+                            "foreignField": join["foreignField"],
+                            "as": join["from"],
+                        }
                     }
-                })
+                )
                 pipeline.append({"$unwind": f"${join['from']}"})
 
         # --- Unnest (unwind) ---
@@ -78,9 +66,9 @@ class MongoDBQueryGenerator:
                 aggs[alias] = self.parse_expr(expr)
 
             pipeline.append({"$group": {"_id": _id, **aggs}})
-        
+
         # PROJECT
-        if "project" in "operations":
+        if "project" in operations:
             pipeline.append({"$project": operations["project"]})
 
         # SORT

@@ -2,29 +2,47 @@ from datetime import timedelta
 
 from couchbase.auth import PasswordAuthenticator
 from couchbase.cluster import Cluster
-from couchbase.exceptions import CollectionNotFoundException, UnAmbiguousTimeoutException
-from couchbase.options import (ClusterOptions, ClusterTimeoutOptions,
-                               QueryOptions)
+from couchbase.exceptions import (
+    AmbiguousTimeoutException,
+    CollectionNotFoundException,
+    CouchbaseException,
+    DocumentNotFoundException,
+    TimeoutException,
+    UnAmbiguousTimeoutException,
+)
+from couchbase.n1ql import QueryScanConsistency
+from couchbase.options import ClusterOptions, QueryOptions
 
-import time
+from .outcome import consume
+from .ownership import MARKER, MARKER_COLLECTION, MARKER_KEY, validate_ownership
 
 
 class Couchbase:
-    def __init__(self):
-        uri = "couchbase://localhost"
-        username = "Administrator"
-        password = "password"
-        bucket_name = "tour_bookings"
-        self.scope_name = "_default"
+    def __init__(
+        self,
+        uri="couchbase://localhost",
+        username="Administrator",
+        password="password",
+        bucket="tour_bookings",
+        scope="_default",
+    ):
+        self.bucket_name = bucket
+        bucket_name = bucket
+        self.scope_name = scope
         auth = PasswordAuthenticator(
             username,
             password,
         )
 
         cluster = Cluster(uri, ClusterOptions(auth))
+        self.cluster = cluster
 
         # Wait until the cluster is ready for use
-        cluster.wait_until_ready(timedelta(seconds=5))
+        try:
+            cluster.wait_until_ready(timedelta(seconds=5))
+        except CouchbaseException:
+            cluster.close()
+            raise
 
         cb = cluster.bucket(bucket_name)
         self.coll_mgr = cb.collections()
@@ -36,114 +54,95 @@ class Couchbase:
         self.bookings = self.cb_scope.collection("bookings")
         self.reviews = self.cb_scope.collection("reviews")
 
+    def ensure_ownership(self):
+        scopes = self.coll_mgr.get_all_scopes()
+        names = {
+            collection.name for scope in scopes if scope.name == self.scope_name
+            for collection in scope.collections
+        }
+        marker = None
+        metadata = self.cb_scope.collection(MARKER_COLLECTION)
+        if MARKER_COLLECTION in names:
+            try:
+                marker = metadata.get(MARKER_KEY).content_as[dict]
+            except DocumentNotFoundException:
+                pass
+        validate_ownership(names, marker)
+        if marker is None:
+            self.coll_mgr.create_collection(self.scope_name, MARKER_COLLECTION)
+            metadata.insert(MARKER_KEY, MARKER)
+
+    def server_version(self):
+        return list(self.cluster.query("SELECT RAW VERSION()"))[0]
+
+    def experiment_metadata(self):
+        server_version = self.server_version()
+        indexes = list(self.cluster.query(
+            "SELECT i.* FROM system:indexes AS i "
+            "WHERE i.bucket_id = $bucket AND i.scope_id = $scope",
+            QueryOptions(named_parameters={"bucket": self.bucket_name, "scope": self.scope_name}),
+        ))
+        return {
+            "server_version": server_version,
+            "bucket": self.bucket_name,
+            "scope": self.scope_name,
+            "indexes": indexes,
+        }
+
     def drop_collections(self):
-        try:
-            self.coll_mgr.drop_collection(self.scope_name, "users")
-            self.coll_mgr.drop_collection(self.scope_name, "tours")
-            self.coll_mgr.drop_collection(self.scope_name, "bookings")
-            self.coll_mgr.drop_collection(self.scope_name, "reviews")
-        except CollectionNotFoundException:
-            pass
-        except Exception as e:
-            raise Exception("Unable to drop collections in the Couchbase database due to the following error: ", e)
+        for name in ("users", "tours", "bookings", "reviews"):
+            try:
+                self.coll_mgr.drop_collection(self.scope_name, name)
+            except CollectionNotFoundException:
+                pass
 
     def create_collections(self):
-        try:
-            self.coll_mgr.create_collection(self.scope_name, "users")
-            self.coll_mgr.create_collection(self.scope_name, "tours")
-            self.coll_mgr.create_collection(self.scope_name, "bookings")
-            self.coll_mgr.create_collection(self.scope_name, "reviews")
+        self.coll_mgr.create_collection(self.scope_name, "users")
+        self.coll_mgr.create_collection(self.scope_name, "tours")
+        self.coll_mgr.create_collection(self.scope_name, "bookings")
+        self.coll_mgr.create_collection(self.scope_name, "reviews")
 
-            self.users = self.cb_scope.collection("users")
-            self.tours = self.cb_scope.collection("tours")
-            self.bookings = self.cb_scope.collection("bookings")
-            self.reviews = self.cb_scope.collection("reviews")
-        except Exception as e:
-            raise Exception("Unable to create collections in the Couchbase database due to the following error: ", e)
-        
+        self.users = self.cb_scope.collection("users")
+        self.tours = self.cb_scope.collection("tours")
+        self.bookings = self.cb_scope.collection("bookings")
+        self.reviews = self.cb_scope.collection("reviews")
+
     def create_indexes(self):
-        try:
-            self.cb_scope.query("CREATE INDEX `tours-id` ON tours(_id);").execute()
-            self.cb_scope.query("CREATE INDEX `bookings-tour_id` ON bookings(tour_id);").execute()
-            self.cb_scope.query("CREATE INDEX `reviews-tour_id` ON reviews(tour_id);").execute()
-        except Exception as e:
-            raise Exception("Unable to create indexes in the Couchbase database due to the following error: ", e)
+        self.cb_scope.query("CREATE INDEX `tours-id` ON tours(_id);").execute()
+        self.cb_scope.query("CREATE INDEX `bookings-tour_id` ON bookings(tour_id);").execute()
+        self.cb_scope.query("CREATE INDEX `reviews-tour_id` ON reviews(tour_id);").execute()
+        for collection, name in [
+            ("tours", "tours-id"),
+            ("bookings", "bookings-tour_id"),
+            ("reviews", "reviews-tour_id"),
+        ]:
+            self.cb_scope.collection(collection).query_indexes().watch_indexes(
+                [name], timeout=timedelta(seconds=300)
+            )
 
-    def add_user(self, id, name, email, password, role, gender, nationality):
-        try:
-            new_user = {
-                "_id": id,
-                "name": name,
-                "email": email,
-                "password": password,
-                "role": role,
-                "gender": gender,
-                "nationality": nationality
-            }
-            self.users.upsert(id, new_user)
-        except Exception as e:
-            raise Exception("Unable to add a user to the Couchbase database due to the following error: ", e)
-        
-    def add_tour(self, id, name, description, difficulty, duration, max_size, price, departure, destination, itinerary, guide_id):
-        try:
-            new_tour = {
-                "_id": id,
-                "name": name,
-                "description": description,
-                "difficulty": difficulty,
-                "duration": duration,
-                "max_group_size": max_size,
-                "rrp": price,
-                "departure": departure,
-                "destination": destination,
-                "itinerary": itinerary,
-                "guide_id": guide_id
-                
-            }
-            self.tours.upsert(id, new_tour)
-        except Exception as e:
-            raise Exception("Unable to add a user to the Couchbase database due to the following error: ", e)
-    
-    def add_booking(self, id, user_id, tour_id, travellers, total_price, date, paid, travelled):
-        try:
-            new_booking = {
-                "_id": id,
-                "user_id": user_id,
-                "tour_id": tour_id,
-                "travellers": travellers,
-                "date": date,
-                "total_price": total_price,
-                "paid": paid,
-                "travelled": travelled
-            }
-            self.bookings.upsert(id, new_booking)
-        except Exception as e:
-            raise Exception("Unable to add a user to the Couchbase database due to the following error: ", e)
-    
-    def add_review(self, id, booking_id, tour_id, rating, review, date):
-        try:
-            new_review = {
-                "_id": id,
-                "booking_id": booking_id,
-                "tour_id": tour_id,
-                "rating": rating,
-                "review": review,
-                "date": date
-            }
-            self.reviews.upsert(id, new_review)
-        except Exception as e:
-            raise Exception("Unable to add a user to the Couchbase database due to the following error: ", e)
-        
-    def query(self, primary_collection, query):
-        try:
-            start_time = time.perf_counter()
-            results = self.cb_scope.query(query)
-            for row in results:
-                continue
-            end_time = time.perf_counter()
-            elapsed_time = end_time - start_time
-            return elapsed_time
-        except UnAmbiguousTimeoutException:
-            return None
-        except Exception as e:
-            raise Exception("Unable to query the Couchbase database due to the following error: ", e)
+    def load_documents(self, collection, documents):
+        destination = self.cb_scope.collection(collection)
+        for document in documents:
+            destination.upsert(document["_id"], document)
+
+    def iter_documents(self, collection):
+        if collection not in {"users", "tours", "bookings", "reviews"}:
+            raise ValueError("Unexpected collection")
+        return self.cb_scope.query(
+            f"SELECT RAW d FROM `{collection}` AS d",
+            QueryOptions(scan_consistency=QueryScanConsistency.REQUEST_PLUS),
+        )
+
+    def close(self):
+        self.cluster.close()
+
+    def query(self, primary_collection, query, *, timeout_seconds=60):
+        return consume(
+            lambda: self.cb_scope.query(
+                query, QueryOptions(timeout=timedelta(seconds=timeout_seconds))
+            ),
+            errors=(CouchbaseException,),
+            is_timeout=lambda error: isinstance(
+                error, (TimeoutException, AmbiguousTimeoutException, UnAmbiguousTimeoutException)
+            ),
+        )

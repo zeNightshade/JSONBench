@@ -1,0 +1,4 @@
+{
+  "mongodb": {"uri": "mongodb://127.0.0.1:27017/", "database": "jsonbench_paper"},
+  "couchbase": {"uri": "couchbase://127.0.0.1", "username": "Administrator", "password_env": "JSONBENCH_CB_PASSWORD", "bucket": "jsonbench_paper", "scope": "benchmark"}
+}

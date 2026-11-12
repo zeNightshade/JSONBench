@@ -1,0 +1,18 @@
+name: jsonbench-paper
+services:
+  mongodb:
+    profiles: [mongodb]
+    image: mongo:8.2.1
+    command: [mongod, --bind_ip_all, --wiredTigerCacheSizeGB, '6']
+    mem_limit: 12g
+    ports: ['127.0.0.1:27017:27017']
+    volumes: ['/data/jsonbench-db/mongodb:/data/db']
+  couchbase:
+    profiles: [couchbase]
+    image: couchbase:community-8.0.0
+    mem_limit: 12g
+    ports:
+      - '127.0.0.1:8091:8091'
+      - '127.0.0.1:8093:8093'
+      - '127.0.0.1:11210:11210'
+    volumes: ['/data/jsonbench-db/couchbase:/opt/couchbase/var']
